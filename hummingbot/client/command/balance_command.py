@@ -8,7 +8,7 @@ from hummingbot.client.config.config_helpers import (
     save_to_yml
 )
 from hummingbot.client.config.config_validators import validate_decimal, validate_exchange
-from hummingbot.market.celo.celo_cli import CeloCLI
+from hummingbot.connector.connector.celo.celo_cli import CeloCLI
 import pandas as pd
 from decimal import Decimal
 from typing import TYPE_CHECKING, Dict, Optional, List

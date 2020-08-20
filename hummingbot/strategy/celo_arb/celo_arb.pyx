@@ -20,17 +20,16 @@ from hummingbot.market.market_base import MarketBase
 from hummingbot.market.market_base cimport MarketBase
 from hummingbot.strategy.market_trading_pair_tuple import MarketTradingPairTuple
 from hummingbot.strategy.strategy_base import StrategyBase
-from hummingbot.market.celo.celo_cli import (
+from hummingbot.connector.connector.celo.celo_cli import (
     CeloCLI,
     CELO_BASE,
     CELO_QUOTE,
 )
-from hummingbot.market.celo.celo_data_types import (
+from hummingbot.connector.connector.celo.celo_data_types import (
     CeloOrder,
     CeloArbTradeProfit
 )
 from hummingbot.core.event.events import (
-    TradeType,
     OrderType,
     TradeFee
 )

@@ -10,7 +10,8 @@ from hummingbot.core.event.event_listener cimport EventListener
 from hummingbot.core.network_iterator import NetworkStatus
 from hummingbot.strategy.market_trading_pair_tuple import MarketTradingPairTuple
 from hummingbot.core.time_iterator cimport TimeIterator
-from hummingbot.market.market_base cimport MarketBase
+# from hummingbot.market.market_base cimport MarketBase
+from hummingbot.connector.exchange_base cimport ExchangeBase as MarketBase
 from hummingbot.core.data_type.trade import Trade
 from hummingbot.core.event.events import (
     OrderFilledEvent,

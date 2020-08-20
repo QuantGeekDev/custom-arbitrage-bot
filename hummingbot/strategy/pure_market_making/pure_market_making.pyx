@@ -17,9 +17,11 @@ from hummingbot.core.event.events import TradeType
 from hummingbot.core.data_type.limit_order cimport LimitOrder
 from hummingbot.core.data_type.limit_order import LimitOrder
 from hummingbot.core.network_iterator import NetworkStatus
-from hummingbot.market.market_base cimport MarketBase
+from hummingbot.connector.exchange_base cimport ExchangeBase as MarketBase
+from hummingbot.connector.exchange_base import ExchangeBase as MarketBase
+# from hummingbot.market.market_base cimport MarketBase
 from hummingbot.market.market_base import (
-    MarketBase,
+    # MarketBase,
     OrderType,
 )
 from hummingbot.strategy.market_trading_pair_tuple import MarketTradingPairTuple
