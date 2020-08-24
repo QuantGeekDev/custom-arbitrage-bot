@@ -37,7 +37,6 @@ s_decimal_NaN = Decimal("nan")
 s_decimal_0 = Decimal(0)
 
 cdef class ExchangeBase(ConnectorBase):
-
     def __init__(self):
         super().__init__()
         self._order_book_tracker = None
@@ -84,14 +83,14 @@ cdef class ExchangeBase(ConnectorBase):
 
     cdef str c_buy(self, str trading_pair, object amount, object order_type=OrderType.MARKET,
                    object price=s_decimal_NaN, dict kwargs={}):
-        raise NotImplementedError
+        return self.buy(trading_pair, amount, order_type, price, kwargs)
 
     cdef str c_sell(self, str trading_pair, object amount, object order_type=OrderType.MARKET,
                     object price=s_decimal_NaN, dict kwargs={}):
-        raise NotImplementedError
+        return self.sell(trading_pair, amount, order_type, price, kwargs)
 
     cdef c_cancel(self, str trading_pair, str client_order_id):
-        raise NotImplementedError
+        return self.cancel(trading_pair, client_order_id)
 
     cdef c_stop_tracking_order(self, str order_id):
         raise NotImplementedError
@@ -103,19 +102,14 @@ cdef class ExchangeBase(ConnectorBase):
                           object order_side,
                           object amount,
                           object price):
-        raise NotImplementedError
+        return self.get_fee(base_currency, quote_currency, order_type, order_side, amount, price)
 
     cdef str c_withdraw(self, str address, str currency, object amount):
         raise NotImplementedError
 
     cdef OrderBook c_get_order_book(self, str trading_pair):
-        raise NotImplementedError
+        return self.get_order_book(trading_pair)
 
-    # ----------------------------------------------------------------------------------------------------------
-    # </editor-fold>
-
-    # <editor-fold desc="+ Decimal interface to OrderBook">
-    # ----------------------------------------------------------------------------------------------------------
     cdef object c_get_price(self, str trading_pair, bint is_buy):
         """
         :returns: Top bid/ask price for a specific trading pair
@@ -155,7 +149,8 @@ cdef class ExchangeBase(ConnectorBase):
                                           result_price,
                                           result_volume)
 
-    cdef ClientOrderBookQueryResult c_get_quote_volume_for_base_amount(self, str trading_pair, bint is_buy, object base_amount):
+    cdef ClientOrderBookQueryResult c_get_quote_volume_for_base_amount(self, str trading_pair, bint is_buy,
+                                                                       object base_amount):
         cdef:
             OrderBook order_book = self.c_get_order_book(trading_pair)
             OrderBookQueryResult result = order_book.c_get_quote_volume_for_base_amount(is_buy, float(base_amount))
@@ -226,28 +221,28 @@ cdef class ExchangeBase(ConnectorBase):
     def get_quote_volume_for_price(self, trading_pair: str, is_buy: bool, price: Decimal) -> ClientOrderBookQueryResult:
         return self.c_get_quote_volume_for_price(trading_pair, is_buy, price)
 
-    def get_balance(self, currency: str) -> Decimal:
-        return self.c_get_balance(currency)
+    # def get_balance(self, currency: str) -> Decimal:
+    #     return self.c_get_balance(currency)
 
     def get_price(self, trading_pair: str, is_buy: bool) -> Decimal:
         return self.c_get_price(trading_pair, is_buy)
 
     def buy(self, trading_pair: str, amount: Decimal, order_type=OrderType.MARKET,
             price: Decimal = s_decimal_NaN, **kwargs) -> str:
-        return self.c_buy(trading_pair, amount, order_type, price, kwargs)
+        raise NotImplementedError
 
     def sell(self, trading_pair: str, amount: Decimal, order_type=OrderType.MARKET,
              price: Decimal = s_decimal_NaN, **kwargs) -> str:
-        return self.c_sell(trading_pair, amount, order_type, price, kwargs)
+        raise NotImplementedError
 
     def cancel(self, trading_pair: str, client_order_id: str):
-        return self.c_cancel(trading_pair, client_order_id)
+        raise NotImplementedError
 
     def withdraw(self, address: str, currency: str, amount: Decimal) -> str:
         return self.c_withdraw(address, currency, amount)
 
     def get_order_book(self, trading_pair: str) -> OrderBook:
-        return self.c_get_order_book(trading_pair)
+        raise NotImplementedError
 
     def get_fee(self,
                 base_currency: str,
@@ -256,7 +251,7 @@ cdef class ExchangeBase(ConnectorBase):
                 order_side: TradeType,
                 amount: Decimal,
                 price: Decimal = NaN) -> TradeFee:
-        return self.c_get_fee(base_currency, quote_currency, order_type, order_side, amount, price)
+        raise NotImplementedError
 
     def get_order_price_quantum(self, trading_pair: str, price: Decimal) -> Decimal:
         return self.c_get_order_price_quantum(trading_pair, price)

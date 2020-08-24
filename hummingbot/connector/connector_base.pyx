@@ -47,6 +47,26 @@ cdef class ConnectorBase(NetworkIterator):
         self._account_available_balances = {}  # Dict[asset_name:str, Decimal]
         self._asset_limit = {}  # Dict[asset_name: str, Decimal]
 
+    @property
+    def _account_balances(self):
+        return self._account_balances
+
+    @property
+    def _account_available_balances(self):
+        return self._account_available_balances
+
+    @property
+    def _event_reporter(self):
+        return self._event_reporter
+
+    @property
+    def _event_logger(self):
+        return self._event_logger
+
+    @property
+    def _current_timestamp(self):
+        return self._current_timestamp
+
     @staticmethod
     def in_flight_asset_balances(in_flight_orders: Dict[str, InFlightOrderBase]) -> Dict[str, Decimal]:
         """
@@ -225,16 +245,16 @@ cdef class ConnectorBase(NetworkIterator):
         raise NotImplementedError
 
     cdef object c_get_order_price_quantum(self, str trading_pair, object price):
-        raise NotImplementedError
+        return self.get_order_price_quantum(trading_pair, price)
 
     def get_order_price_quantum(self, trading_pair: str, price: Decimal) -> Decimal:
-        return self.c_get_order_price_quantum(trading_pair, price)
-
-    cdef object c_get_order_size_quantum(self, str trading_pair, object order_size):
         raise NotImplementedError
 
+    cdef object c_get_order_size_quantum(self, str trading_pair, object order_size):
+        return self.get_order_size_quantum(trading_pair, order_size)
+
     def get_order_size_quantum(self, trading_pair: str, order_size: Decimal) -> Decimal:
-        return self.c_get_order_size_quantum(trading_pair, order_size)
+        raise NotImplementedError
 
     cdef object c_quantize_order_price(self, str trading_pair, object price):
         if price.is_nan():

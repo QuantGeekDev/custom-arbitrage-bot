@@ -42,8 +42,13 @@ from hummingbot.core.utils.async_utils import (
     safe_gather,
 )
 from hummingbot.logger.struct_logger import METRICS_LOG_LEVEL
-from hummingbot.market.binance.binance_market import (
-    BinanceMarket,
+# from hummingbot.market.binance.binance_market import (
+#     BinanceMarket,
+#     BinanceTime,
+#     binance_client_module
+# )
+from hummingbot.market.binance.binance_exchange import (
+    BinanceExchange,
     BinanceTime,
     binance_client_module
 )
@@ -83,7 +88,7 @@ class BinanceMarketUnitTest(unittest.TestCase):
         MarketEvent.OrderFailure
     ]
 
-    market: BinanceMarket
+    market: BinanceExchange
     market_logger: EventLogger
     stack: contextlib.ExitStack
     base_api_url = "api.binance.com"
@@ -130,7 +135,7 @@ class BinanceMarketUnitTest(unittest.TestCase):
             cls._t_nonce_patcher = unittest.mock.patch("hummingbot.market.binance.binance_market.get_tracking_nonce")
             cls._t_nonce_mock = cls._t_nonce_patcher.start()
         cls.clock: Clock = Clock(ClockMode.REALTIME)
-        cls.market: BinanceMarket = BinanceMarket(
+        cls.market: BinanceExchange = BinanceExchange(
             API_KEY, API_SECRET,
             order_book_tracker_data_source_type=OrderBookTrackerDataSourceType.EXCHANGE_API,
             user_stream_tracker_data_source_type=UserStreamTrackerDataSourceType.EXCHANGE_API,
@@ -197,7 +202,7 @@ class BinanceMarketUnitTest(unittest.TestCase):
         maker_buy_trade_fee: TradeFee = self.market.get_fee("BTC", "USDT", OrderType.LIMIT_MAKER, TradeType.BUY, Decimal(1), Decimal(4000))
         self.assertGreater(maker_buy_trade_fee.percent, 0)
         self.assertEqual(len(maker_buy_trade_fee.flat_fees), 0)
-        taker_buy_trade_fee: TradeFee = self.market.get_fee("BTC", "USDT", OrderType.LIMIT, TradeType.BUY, Decimal(1))
+        taker_buy_trade_fee: TradeFee = self.market.get_fee("BTC", "USDT", OrderType.LIMIT, TradeType.BUY, 0, Decimal(1))
         self.assertGreater(taker_buy_trade_fee.percent, 0)
         self.assertEqual(len(taker_buy_trade_fee.flat_fees), 0)
         sell_trade_fee: TradeFee = self.market.get_fee("BTC", "USDT", OrderType.LIMIT, TradeType.SELL, Decimal(1), Decimal(4000))
@@ -557,7 +562,7 @@ class BinanceMarketUnitTest(unittest.TestCase):
             self.clock.remove_iterator(self.market)
             for event_tag in self.events:
                 self.market.remove_listener(event_tag, self.market_logger)
-            self.market: BinanceMarket = BinanceMarket(
+            self.market: BinanceExchange = BinanceExchange(
                 binance_api_key=API_KEY,
                 binance_api_secret=API_SECRET,
                 order_book_tracker_data_source_type=OrderBookTrackerDataSourceType.EXCHANGE_API,
