@@ -24,7 +24,7 @@ from hummingbot.core.event.events import (
 )
 from hummingbot.strategy.celo_arb.celo_arb import CeloArbStrategy, get_trade_profits
 from test.integration.assets.mock_data.fixture_celo import outputs as celo_outputs, TEST_ADDRESS, TEST_PASSWORD
-from hummingbot.market.celo.celo_cli import CeloCLI
+from hummingbot.connector.connector.celo.celo_cli import CeloCLI
 
 
 MOCK_CELO_COMMANDS = True
@@ -50,7 +50,7 @@ class CeloArbUnitTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         if MOCK_CELO_COMMANDS:
-            cls._patcher = mock.patch("hummingbot.market.celo.celo_cli.command")
+            cls._patcher = mock.patch("hummingbot.connector.connector.celo.celo_cli.command")
             cls._mock = cls._patcher.start()
             cls._mock.side_effect = mock_command
 

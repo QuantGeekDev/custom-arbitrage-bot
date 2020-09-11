@@ -2,13 +2,13 @@ import subprocess
 from subprocess import CalledProcessError
 from decimal import Decimal
 from typing import List, Optional, Dict
-from hummingbot.market.celo.celo_data_types import CeloExchangeRate, CeloBalance
+from hummingbot.connector.connector.celo.celo_data_types import CeloExchangeRate, CeloBalance
+from hummingbot.connector.connector.celo import celo_constants as Constants
 
-
-UNIT_MULTIPLIER = Decimal(1e18)
-CELO_BASE = "CGLD"
-CELO_QUOTE = "CUSD"
-SYMBOLS_MAP = {CELO_BASE: "gold", CELO_QUOTE: "usd"}
+UNIT_MULTIPLIER = Constants.UNIT_MULTIPLIER
+CELO_BASE = Constants.CELO_BASE
+CELO_QUOTE = Constants.CELO_QUOTE
+SYMBOLS_MAP = Constants.SYMBOLS_MAP
 
 
 def command(commands: List[str]) -> Optional[str]:
@@ -57,11 +57,11 @@ class CeloCLI:
         output = command(["celocli", "account:balance", cls.address])
         lines = output.split("\n")
         raw_balances = {}
+        data_type = ["gold", "lockedGold", "usd", "pending"]
         for line in lines:
-            if ":" not in line:
-                continue
-            asset, value = line.split(":")
-            raw_balances[asset.strip()] = Decimal(value) / UNIT_MULTIPLIER
+            if ":" in line and [key for key in data_type if (key in line)]:
+                asset, value = line.split(":")
+                raw_balances[asset.strip()] = Decimal(value) / UNIT_MULTIPLIER
         balances[CELO_BASE] = CeloBalance(CELO_BASE, raw_balances["gold"], raw_balances["lockedGold"])
         balances[CELO_QUOTE] = CeloBalance(CELO_QUOTE, raw_balances["usd"], Decimal("0"))
         return balances

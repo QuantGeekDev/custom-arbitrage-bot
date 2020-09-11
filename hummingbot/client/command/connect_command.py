@@ -4,7 +4,7 @@ from hummingbot.client.config.global_config_map import global_config_map
 from hummingbot.user.user_balances import UserBalances
 from hummingbot.client.config.config_helpers import save_to_yml
 from hummingbot.client.settings import GLOBAL_CONFIG_PATH
-from hummingbot.market.celo.celo_cli import CeloCLI
+from hummingbot.connector.connector.celo.celo_cli import CeloCLI
 import pandas as pd
 from typing import TYPE_CHECKING, Optional
 if TYPE_CHECKING:

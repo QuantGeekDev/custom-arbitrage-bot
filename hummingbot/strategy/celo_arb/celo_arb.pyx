@@ -16,16 +16,16 @@ from hummingbot.core.data_type.limit_order cimport LimitOrder
 from hummingbot.core.data_type.limit_order import LimitOrder
 from hummingbot.core.network_iterator import NetworkStatus
 from hummingbot.core.utils.async_call_scheduler import AsyncCallScheduler, safe_ensure_future
-from hummingbot.connector.exchange_base import ExchangeBase
-from hummingbot.connector.exchange_base cimport ExchangeBase
+from hummingbot.connector.connector_base import ConnectorBase
+from hummingbot.connector.connector_base cimport ConnectorBase
+from hummingbot.connector.connector.celo.celo_connector import CeloConnector
 from hummingbot.strategy.market_trading_pair_tuple import MarketTradingPairTuple
 from hummingbot.strategy.strategy_base import StrategyBase
-from hummingbot.market.celo.celo_cli import (
-    CeloCLI,
-    CELO_BASE,
-    CELO_QUOTE,
+from hummingbot.connector.connector.celo import celo_constants as Constants
+from hummingbot.connector.connector.celo.celo_cli import (
+    CeloCLI
 )
-from hummingbot.market.celo.celo_data_types import (
+from hummingbot.connector.connector.celo.celo_data_types import (
     CeloOrder,
     CeloArbTradeProfit
 )
@@ -37,6 +37,8 @@ from hummingbot.core.event.events import (
 from hummingbot.model.trade_fill import TradeFill
 
 
+CELO_BASE = Constants.CELO_BASE
+CELO_QUOTE = Constants.CELO_QUOTE
 NaN = float("nan")
 s_decimal_zero = Decimal(0)
 ds_logger = None
@@ -141,11 +143,11 @@ cdef class CeloArbStrategy(StrategyBase):
         return self._celo_orders
 
     @property
-    def active_bids(self) -> List[Tuple[ExchangeBase, LimitOrder]]:
+    def active_bids(self) -> List[Tuple[ConnectorBase, LimitOrder]]:
         return self._sb_order_tracker.active_bids
 
     @property
-    def active_asks(self) -> List[Tuple[ExchangeBase, LimitOrder]]:
+    def active_asks(self) -> List[Tuple[ConnectorBase, LimitOrder]]:
         return self._sb_order_tracker.active_asks
 
     @property
@@ -192,7 +194,7 @@ cdef class CeloArbStrategy(StrategyBase):
         warning_lines.extend(self.network_warning([self._market_info]))
 
         assets_df = self.wallet_balance_data_frame([self._market_info])
-        celo_bals = CeloCLI.balances()
+        celo_bals = CeloConnector.get_balance()
         series = []
         for token, bal in celo_bals.items():
             series.append(pd.Series(["Celo", token, round(bal.total, 2), round(bal.available(), 2)],
@@ -294,7 +296,7 @@ cdef class CeloArbStrategy(StrategyBase):
         cdef:
             object quantized_buy_amount
             object quantized_sell_amount
-            ExchangeBase market = self._market_info.market
+            ConnectorBase market = self._market_info.market
 
         quantized_sell_amount = market.c_quantize_order_amount(self._market_info.trading_pair,
                                                                self._order_amount)
@@ -309,7 +311,7 @@ cdef class CeloArbStrategy(StrategyBase):
                                f"({sell_balance}) is below required sell amount ({quantized_sell_amount}).")
             return
         cusd_required = buy_amount * celo_buy_trade.celo_price
-        celo_bals = CeloCLI.balances()
+        celo_bals = CeloConnector.get_balance(self)
         if celo_bals[CELO_QUOTE].available() < cusd_required:
             self.logger().info(f"Can't arbitrage, Celo {CELO_QUOTE} available balance "
                                f"({celo_bals[CELO_QUOTE].available()}) is below required buy amount "
@@ -319,7 +321,7 @@ cdef class CeloArbStrategy(StrategyBase):
                             f"Buying {buy_amount} {CELO_BASE} at Celo at {celo_buy_trade.celo_price:.3f} price")
         min_cgld_returned = buy_amount * (Decimal("1") - self._celo_slippage_buffer)
         try:
-            tx_hash = CeloCLI.buy_cgld(cusd_required, min_cgld_returned=min_cgld_returned)
+            tx_hash = CeloConnector.buy(cusd_required, price=celo_buy_trade.celo_price, min_cgld_returned=min_cgld_returned)
         except Exception as err:
             self.log_with_clock(logging.INFO, str(err))
             return
@@ -350,7 +352,7 @@ cdef class CeloArbStrategy(StrategyBase):
             object quantized_buy_amount
             object quantized_sell_amount
             object quantized_order_amount = Decimal("0")
-            ExchangeBase market = self._market_info.market
+            ConnectorBase market = self._market_info.market
 
         quantized_buy_amount = market.c_quantize_order_amount(self._market_info.trading_pair,
                                                               self._order_amount,
@@ -367,7 +369,7 @@ cdef class CeloArbStrategy(StrategyBase):
                                f"{self._market_info.quote_asset} balance "
                                f"({buy_balance}) is below required buy amount ({buy_required}).")
             return
-        celo_bals = CeloCLI.balances()
+        celo_bals = CeloConnector.get_balance()
         if celo_bals[CELO_BASE].available() < sell_amount:
             self.logger().info(f"Can't arbitrage, Celo {CELO_BASE} available balance "
                                f"({celo_bals[CELO_BASE].available()}) is below required sell amount "
@@ -378,7 +380,7 @@ cdef class CeloArbStrategy(StrategyBase):
         min_cusd_returned = sell_amount * celo_sell_trade.celo_price * (Decimal("1") -
                                                                         self._celo_slippage_buffer)
         try:
-            tx_hash = CeloCLI.sell_cgld(sell_amount, min_cusd_returned=min_cusd_returned)
+            tx_hash = CeloConnector.sell(sell_amount, min_cusd_returned=min_cusd_returned)
         except Exception as err:
             self.log_with_clock(logging.INFO, str(err))
             return

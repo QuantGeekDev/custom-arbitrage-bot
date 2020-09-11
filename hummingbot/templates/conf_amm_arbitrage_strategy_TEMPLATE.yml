@@ -1,0 +1,26 @@
+########################################
+###  AMM Arbitrage strategy config   ###
+########################################
+
+template_version: 1
+strategy: null
+
+# The following configuations are only required for the AMM arbitrage trading strategy
+
+# Exchange and token parameters
+primary_market: null
+secondary_market: null
+primary_market_trading_pair: null
+secondary_market_trading_pair: null
+order_amount: null
+
+# Minimum profitability target required to place an order
+# Expressed in percentage value, e.g. 1 = 1% target profit
+min_profitability: null
+
+# A buffer to add to the AMM price to account for slippage when buying/selling on celocli
+# (Enter 1 for 1%)
+amm_slippage_buffer: null
+
+# For more detailed information, see:
+# https://docs.hummingbot.io/strategies/amm_arbitrage/#configuration-parameters

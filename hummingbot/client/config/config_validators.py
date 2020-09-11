@@ -1,6 +1,7 @@
 from hummingbot.core.utils.trading_pair_fetcher import TradingPairFetcher
 from hummingbot.client.settings import (
     EXCHANGES,
+    AMM,
     STRATEGIES,
 )
 from decimal import Decimal
@@ -11,6 +12,11 @@ from typing import Optional
 def validate_exchange(value: str) -> Optional[str]:
     if value not in EXCHANGES:
         return f"Invalid exchange, please choose value from {EXCHANGES}"
+
+
+def validate_amm(value: str) -> Optional[str]:
+    if value not in AMM:
+        return f"Invalid exchange, please choose value from {AMM}"
 
 
 def validate_strategy(value: str) -> Optional[str]:
