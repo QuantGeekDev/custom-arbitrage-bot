@@ -47,9 +47,16 @@ for key in connector_keys().keys():
 binance_api_key = os.getenv("BINANCE_API_KEY")
 binance_api_secret = os.getenv("BINANCE_API_SECRET")
 
+<<<<<<< HEAD
 # Binance Perpetuals Tests
 binance_perpetuals_api_key = os.getenv("BINANCE_PERPETUALS_API_KEY")
 binance_perpetuals_api_secret = os.getenv("BINANCE_PERPETUALS_API_SECRET")
+=======
+# Bitstamp Tests
+bitstamp_client_id = os.getenv("BITSTAMP_CLIENT_ID")
+bitstamp_api_key = os.getenv("BITSTAMP_API_KEY")
+bitstamp_api_secret = os.getenv("BITSTAMP_API_SECRET")
+>>>>>>> eacc1fba... Implemented bitstamp connector
 
 # Coinbase Pro Tests
 coinbase_pro_api_key = os.getenv("COINBASE_PRO_API_KEY")
