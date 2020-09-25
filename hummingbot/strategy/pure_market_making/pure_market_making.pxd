@@ -38,6 +38,7 @@ cdef class PureMarketMakingStrategy(StrategyBase):
         list _ping_pong_warning_lines
         bint _hb_app_notification
         object _order_override
+        bint _lower_order_amount
 
         double _cancel_timestamp
         double _create_timestamp

@@ -115,5 +115,8 @@ take_if_crossed: null
 # Please make sure there is a space between : and [
 order_override: null
 
+# To indicate whether the bot should place an order for lower order amount if the balance is not enough
+lower_order_amount: null
+
 # For more detailed information, see:
 # https://docs.hummingbot.io/strategies/pure-market-making/#configuration-parameters

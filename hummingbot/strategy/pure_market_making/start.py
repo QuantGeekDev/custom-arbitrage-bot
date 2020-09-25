@@ -48,6 +48,7 @@ def start(self):
         price_source_custom_api = c_map.get("price_source_custom_api").value
         order_refresh_tolerance_pct = c_map.get("order_refresh_tolerance_pct").value / Decimal('100')
         order_override = c_map.get("order_override").value
+        lower_order_amount = c_map.get("lower_order_amount").value
 
         trading_pair: str = raw_trading_pair
         maker_assets: Tuple[str, str] = self._initialize_market_assets(exchange, [trading_pair])[0]
@@ -99,6 +100,7 @@ def start(self):
             minimum_spread=minimum_spread,
             hb_app_notification=True,
             order_override=order_override,
+            lower_order_amount=lower_order_amount
         )
     except Exception as e:
         self._notify(str(e))

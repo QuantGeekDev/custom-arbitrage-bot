@@ -338,4 +338,10 @@ pure_market_making_config_map = {
                   required_if=lambda: False,
                   default=None,
                   type_str="json"),
+    "lower_order_amount":
+        ConfigVar(key="lower_order_amount",
+                  prompt="Do you want to allow the bot to place lower order amount if balance is not enough? >>> ",
+                  type_str="bool",
+                  default=False,
+                  validator=validate_bool),
 }

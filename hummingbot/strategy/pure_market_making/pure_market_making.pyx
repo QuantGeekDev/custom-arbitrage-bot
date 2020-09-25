@@ -89,6 +89,7 @@ cdef class PureMarketMakingStrategy(StrategyBase):
                  minimum_spread: Decimal = Decimal(0),
                  hb_app_notification: bool = False,
                  order_override: Dict[str, List[str]] = {},
+                 lower_order_amount: bool = False
                  ):
 
         if price_ceiling != s_decimal_neg_one and price_ceiling < price_floor:
@@ -127,6 +128,7 @@ cdef class PureMarketMakingStrategy(StrategyBase):
         self._ping_pong_warning_lines = []
         self._hb_app_notification = hb_app_notification
         self._order_override = order_override
+        self._lower_order_amount = lower_order_amount
 
         self._cancel_timestamp = 0
         self._create_timestamp = 0
