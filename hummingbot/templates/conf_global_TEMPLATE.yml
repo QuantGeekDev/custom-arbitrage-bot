@@ -21,6 +21,10 @@ binance_perpetual_api_secret: null
 binance_perpetual_testnet_api_key: null
 binance_perpetual_testnet_api_secret: null
 
+bitstamp_client_id: null
+bitstamp_api_key: null
+bitstamp_api_secret: null
+
 bittrex_api_key: null
 bittrex_secret_key: null
 
