@@ -61,6 +61,17 @@ def load_parser(hummingbot) -> ThrowingArgumentParser:
     balance_parser.add_argument("args", nargs="*")
     balance_parser.set_defaults(func=hummingbot.balance)
 
+    play_parser = subparsers.add_parser("play", help="Set your play.")
+    play_parser.add_argument("option", nargs="?", choices=["bullish", "bullish+", "bearish", "bearish+",
+                                                           "set_bull_trap", "set_bear_trap",
+                                                           "all_in", "cautious"], default=None,
+                             help="Option for play command")
+    play_parser.add_argument("args", nargs="*")
+    play_parser.set_defaults(func=hummingbot.play)
+
+    playbook_parser = subparsers.add_parser("playbook", help="Display your playbook")
+    playbook_parser.set_defaults(func=hummingbot.playbook)
+
     config_parser = subparsers.add_parser("config", help="Display the current bot's configuration")
     config_parser.add_argument("key", nargs="?", default=None, help="Name of the parameter you want to change")
     config_parser.add_argument("value", nargs="?", default=None, help="New value for the parameter")

@@ -18,6 +18,7 @@ from hummingbot.client.ui.parser import ThrowingArgumentParser
 from hummingbot.core.utils.wallet_setup import list_wallets
 from hummingbot.core.utils.trading_pair_fetcher import TradingPairFetcher
 from hummingbot.client.command.connect_command import OPTIONS as CONNECT_EXCHANGES
+from hummingbot.client.command.play_command import OPTIONS as PLAY_OPTIONS
 
 
 def file_name_list(path, file_extension):
@@ -34,6 +35,7 @@ class HummingbotCompleter(Completer):
         self._connect_exchange_completer = WordCompleter(CONNECT_EXCHANGES, ignore_case=True)
         self._export_completer = WordCompleter(["keys", "trades"], ignore_case=True)
         self._balance_completer = WordCompleter(["limit", "paper"], ignore_case=True)
+        self._play_completer = WordCompleter(PLAY_OPTIONS, ignore_case=True)
         self._strategy_completer = WordCompleter(STRATEGIES, ignore_case=True)
         self._py_file_completer = WordCompleter(file_name_list(SCRIPTS_PATH, "py"))
 
@@ -109,6 +111,10 @@ class HummingbotCompleter(Completer):
         text_before_cursor: str = document.text_before_cursor
         return text_before_cursor.startswith("balance ")
 
+    def _complete_play_options(self, document: Document) -> bool:
+        text_before_cursor: str = document.text_before_cursor
+        return text_before_cursor.startswith("play ") and len([w for w in text_before_cursor if w == " "]) == 1
+
     def _complete_trading_pairs(self, document: Document) -> bool:
         return "trading pair" in self.prompt_text
 
@@ -170,6 +176,10 @@ class HummingbotCompleter(Completer):
 
         elif self._complete_balance_options(document):
             for c in self._balance_completer.get_completions(document, complete_event):
+                yield c
+
+        elif self._complete_play_options(document):
+            for c in self._play_completer.get_completions(document, complete_event):
                 yield c
 
         elif self._complete_exchanges(document):
