@@ -31,7 +31,7 @@ An FAQ with more technical details follow, but feel free to move on with your li
 
 ## Frequently Asked Questions
 
-## 1. Where is the heartbeat mechanism configured and what if I want to turn it off?
+### 1. Where is the heartbeat mechanism configured and what if I want to turn it off?
 
 The `conf_global.yml` file will have the following configuration parameters:
 - `heartbeat_enabled`: default = `True`
@@ -39,11 +39,11 @@ The `conf_global.yml` file will have the following configuration parameters:
 
 Changing the enabled flag to `False` will disable all data reporting. The heartbeat interval parameter may be adjusted if you’d rather send data on a slower or faster interval. Fifteen minutes was chosen and test by the team as a reasonable interval for an active trading Hummingbot instance
 
-## 2. Why should I participate in these data gathering? What’s in it for me?
+### 2. Why should I participate in these data gathering? What’s in it for me?
 
 The Hummingbot trading bot is free to use and yet is built and maintained by a world class core team of developers and finance industry experts. It allows anyone with any amount of capital to become a market marker and/or an arbitrageur on the world’s largest and most active platforms. You also get 24/7 free online support with knowledgeable, full-time paid support staff. Maybe you could share a bit of anonymous volume data to help us grow the product?
 
-## 3. What’s the reason/rationale for each piece of data collected?
+### 3. What’s the reason/rationale for each piece of data collected?
 
 | Data Item | Benefit to Hummingbot |
 | :-------  | :--------------- |
@@ -56,7 +56,7 @@ The Hummingbot trading bot is free to use and yet is built and maintained by a w
 | Operating System | Supporting Windows, Mac, and Linux require development hours, separate QA testing, segmented documentation. With limited resources, the team needs to focus on what the community is using.
 | ClientID | The ClientID is randomly generated and does not track or identify the user in any way. The data stored is strictly limited to the elements detailed here. The unique ID is needed to calculate metrics such as total bots active, average volume per bot, etc. as well as to ensure we are not double counting activity.
 
-## 4. How can I be sure that’s the only data Hummingbot is collecting?
+### 4. How can I be sure that’s the only data Hummingbot is collecting?
 
 Hummingbot is 100% open-source. Once version 0.34 is released, please feel free to review for yourself…even better, please review and post on our Discord channels what you found. We’ve always been open and honest with our community members and you’ll find this case is no different.
 
