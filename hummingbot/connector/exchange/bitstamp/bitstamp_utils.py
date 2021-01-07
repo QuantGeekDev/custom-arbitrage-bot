@@ -11,7 +11,7 @@ DEFAULT_FEES = [0.5, 0.5]
 
 
 def convert_from_exchange_trading_pair(exchange_trading_pair: str) -> Optional[str]:
-    return exchange_trading_pair.replace("/", "-")
+    return exchange_trading_pair.replace("/", "-").upper()
 
 
 def convert_to_exchange_trading_pair(hb_trading_pair: str) -> str:
@@ -22,13 +22,13 @@ def convert_to_exchange_trading_pair(hb_trading_pair: str) -> str:
 KEYS = {
     "bitstamp_api_key":
         ConfigVar(key="bitstamp_api_key",
-                  prompt="Enter your Crypto.com API key >>> ",
+                  prompt="Enter your Bitstamp API key >>> ",
                   required_if=using_exchange("bitstamp"),
                   is_secure=True,
                   is_connect_key=True),
     "bitstamp_secret_key":
         ConfigVar(key="bitstamp_secret_key",
-                  prompt="Enter your Crypto.com secret key >>> ",
+                  prompt="Enter your Bitstamp secret key >>> ",
                   required_if=using_exchange("bitstamp"),
                   is_secure=True,
                   is_connect_key=True),
