@@ -13,6 +13,8 @@ from typing import (
 import time
 import ujson
 import websockets
+import hummingbot.connector.exchange.bitstamp.bitstamp_constants as CONSTANTS
+
 from websockets.exceptions import ConnectionClosed
 
 from hummingbot.core.utils.async_utils import safe_gather
@@ -25,14 +27,6 @@ from hummingbot.connector.exchange.bitstamp.bitstamp_utils import (
     convert_to_exchange_trading_pair,
     convert_from_exchange_trading_pair
 )
-
-BITSTAMP_ROOT_URL = "https://www.bitstamp.net/api/v2/"
-ORDER_BOOK_SNAPSHOT_URL = "order_book/"
-TICKER_URL = "ticker/"
-TRADING_PAIRS_URL = "trading-pairs-info/"
-STREAM_URL = "wss://ws.bitstamp.net"
-MAX_RETRIES = 20
-NaN = float("nan")
 
 
 class BitstampAPIOrderBookDataSource(OrderBookTrackerDataSource):
@@ -59,16 +53,29 @@ class BitstampAPIOrderBookDataSource(OrderBookTrackerDataSource):
     @classmethod
     async def get_last_traded_price(cls, trading_pair: str) -> float:
         async with aiohttp.ClientSession() as client:
-            resp = await client.get(
-                f"{BITSTAMP_ROOT_URL}{TICKER_URL}{convert_to_exchange_trading_pair(trading_pair)}/")
-            resp_json = await resp.json()
-            return float(resp_json["last"])
+            request_url = CONSTANTS.REST_URL + CONSTANTS.TICKER_URL + convert_to_exchange_trading_pair(trading_pair)
+            response = await client.get(request_url)
+            data = await response.json()
+            return float(data["last"])
 
     @staticmethod
-    async def get_snapshot(client: aiohttp.ClientSession, trading_pair: str) -> Dict[str, Any]:
-        order_book_url: str = f"{BITSTAMP_ROOT_URL}{ORDER_BOOK_SNAPSHOT_URL}" \
+    async def fetch_trading_pairs() -> List[str]:
+        async with aiohttp.ClientSession() as client:
+            async with client.get(f"{CONSTANTS.REST_URL + CONSTANTS.TRADING_PAIRS_URL}", timeout=10) as response:
+                if response.status == 200:
+                    try:
+                        data: Dict[str, Any] = await response.json()
+                        return [convert_from_exchange_trading_pair(entry["name"]) for entry in data]
+                    except Exception:
+                        BitstampAPIOrderBookDataSource.logger().error(f"Error getting {CONSTANTS.EXCHANGE_NAME} trading pairs.")
+                        pass
+                        # Do nothing if the request fials -- there will be not autocomplete for bitstamp trading pairs
+                    return []
+
+    @staticmethod
+    async def get_order_book_data(client: aiohttp.ClientSession, trading_pair: str) -> Dict[str, Any]:
+        order_book_url: str = f"{CONSTANTS.REST_URL}{CONSTANTS.ORDER_BOOK_SNAPSHOT_URL}" \
                               f"{convert_to_exchange_trading_pair(trading_pair)}/"
-        print(order_book_url)
         async with client.get(order_book_url) as response:
             response: aiohttp.ClientResponse = response
             if response.status != 200:
@@ -85,7 +92,7 @@ class BitstampAPIOrderBookDataSource(OrderBookTrackerDataSource):
 
     async def get_new_order_book(self, trading_pair: str) -> OrderBook:
         async with aiohttp.ClientSession() as client:
-            snapshot: Dict[str, Any] = await self.get_snapshot(client, trading_pair)
+            snapshot: Dict[str, Any] = await self.get_order_book_data(client, trading_pair)
             snapshot_timestamp: float = time.time()
             snapshot_msg: OrderBookMessage = BitstampOrderBook.snapshot_message_from_exchange(
                 snapshot,
@@ -119,10 +126,13 @@ class BitstampAPIOrderBookDataSource(OrderBookTrackerDataSource):
             await ws.close()
 
     async def listen_for_trades(self, ev_loop: asyncio.BaseEventLoop, output: asyncio.Queue):
+        """
+        Listen for trades using websocket trade channel
+        """
         while True:
             try:
                 trading_pairs: List[str] = self._trading_pairs
-                async with websockets.connect(STREAM_URL) as ws:
+                async with websockets.connect(CONSTANTS.STREAM_URL) as ws:
                     ws: websockets.WebSocketClientProtocol = ws
                     for pair in trading_pairs:
                         subscribe_msg: Dict[str, Any] = {
@@ -158,7 +168,7 @@ class BitstampAPIOrderBookDataSource(OrderBookTrackerDataSource):
         while True:
             try:
                 trading_pairs: List[str] = self._trading_pairs
-                async with websockets.connect(STREAM_URL) as ws:
+                async with websockets.connect(CONSTANTS.STREAM_URL) as ws:
                     ws: websockets.WebSocketClientProtocol = ws
                     for pair in trading_pairs:
                         subscribe_msg: Dict[str, Any] = {
@@ -196,12 +206,12 @@ class BitstampAPIOrderBookDataSource(OrderBookTrackerDataSource):
         while True:
             try:
                 trading_pairs: List[str] = self._trading_pairs
-                async with websockets.connect(STREAM_URL) as ws:
+                async with websockets.connect(CONSTANTS.STREAM_URL) as ws:
                     ws: websockets.WebSocketClientProtocol = ws
                     for pair in trading_pairs:
                         subscribe_msg: Dict[str, Any] = {
                             "event": "bts:subscribe",
-                            "data": {"channel": f"order_book_{convert_to_exchange_trading_pair(pair)}"}
+                            "data": {"channel": f"detail_order_book_{convert_to_exchange_trading_pair(pair)}"}
                         }
                         await ws.send(ujson.dumps(subscribe_msg))
                     async for raw_msg in self._inner_messages(ws):
