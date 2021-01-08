@@ -1,20 +1,5 @@
-<<<<<<< HEAD
 from hummingbot.core.utils.market_price import get_mid_price
 from hummingbot.client.settings import CONNECTOR_SETTINGS
-=======
-from hummingbot.connector.exchange.binance.binance_market import BinanceMarket
-from hummingbot.connector.exchange.bitstamp.bitstamp_market import BitstampMarket
-from hummingbot.connector.exchange.bittrex.bittrex_market import BittrexMarket
-from hummingbot.connector.exchange.coinbase_pro.coinbase_pro_market import CoinbaseProMarket
-from hummingbot.connector.exchange.huobi.huobi_market import HuobiMarket
-from hummingbot.connector.exchange.kucoin.kucoin_market import KucoinMarket
-from hummingbot.connector.exchange.liquid.liquid_market import LiquidMarket
-from hummingbot.connector.exchange.kraken.kraken_market import KrakenMarket
-from hummingbot.connector.exchange.eterbase.eterbase_market import EterbaseMarket
-from hummingbot.connector.exchange.crypto_com.crypto_com_exchange import CryptoComExchange
-from hummingbot.core.utils.market_mid_price import get_mid_price
-from hummingbot.client.settings import EXCHANGES, DEXES
->>>>>>> eacc1fba... Implemented bitstamp connector
 from hummingbot.client.config.security import Security
 from hummingbot.client.config.config_helpers import get_connector_class, get_eth_wallet_private_key
 from hummingbot.core.utils.async_utils import safe_gather
@@ -31,7 +16,6 @@ class UserBalances:
     __instance = None
 
     @staticmethod
-<<<<<<< HEAD
     def connect_market(exchange, **api_details):
         connector = None
         conn_setting = CONNECTOR_SETTINGS[exchange]
@@ -40,32 +24,6 @@ class UserBalances:
             init_params = conn_setting.conn_init_parameters(api_details)
             connector = connector_class(**init_params)
         return connector
-=======
-    def connect_market(exchange, *api_details):
-        market = None
-        if exchange == "binance":
-            market = BinanceMarket(*api_details)
-        elif exchange == "bitstamp":
-            market = BitstampMarket(*api_details)
-        elif exchange == "bittrex":
-            market = BittrexMarket(api_details[0], api_details[1])
-        elif exchange == "coinbase_pro":
-            market = CoinbaseProMarket(api_details[0], api_details[1], api_details[2])
-        elif exchange == "huobi":
-            market = HuobiMarket(api_details[0], api_details[1])
-        elif exchange == "kucoin":
-            market = KucoinMarket(api_details[0], api_details[2], api_details[1])
-        elif exchange == "liquid":
-            market = LiquidMarket(api_details[0], api_details[1])
-        elif exchange == "kraken":
-            market = KrakenMarket(api_details[0], api_details[1])
-        elif exchange == "eterbase":
-            market = EterbaseMarket(api_details[0], api_details[1], api_details[2])
-        elif exchange == "crypto_com":
-            market = CryptoComExchange(*api_details)
-
-        return market
->>>>>>> eacc1fba... Implemented bitstamp connector
 
     # return error message if the _update_balances fails
     @staticmethod
