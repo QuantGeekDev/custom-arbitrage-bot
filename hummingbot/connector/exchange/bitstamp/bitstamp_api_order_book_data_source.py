@@ -84,9 +84,9 @@ class BitstampAPIOrderBookDataSource(OrderBookTrackerDataSource):
             data: Dict[str, Any] = await response.json()
             data = {"trading_pair": trading_pair, **data}
 
-            # Need to add the symbol into the snapshot message for the Kafka message queue.
-            # Because otherwise, there'd be no way for the receiver to know which market the
-            # snapshot belongs to.
+            # Need to add the trading pair into the snapshot message response.
+            # Because Bitstamp API response for order books does not include trading pair market details.
+            # The corresponding order book is return simply as a list of asks and bids.
 
             return data
 
@@ -187,8 +187,7 @@ class BitstampAPIOrderBookDataSource(OrderBookTrackerDataSource):
                             order_book_message: OrderBookMessage = BitstampOrderBook.diff_message_from_exchange(
                                 msg["data"],
                                 time.time(),
-                                metadata={"trading_pair": convert_from_exchange_trading_pair(msg["channel"]
-                                                                                             .split("_")[2])}
+                                metadata={"trading_pair": convert_from_exchange_trading_pair(msg["channel"].split("_")[-1])}
                             )
                             output.put_nowait(order_book_message)
                         else:
@@ -225,8 +224,9 @@ class BitstampAPIOrderBookDataSource(OrderBookTrackerDataSource):
                             order_book_message: OrderBookMessage = BitstampOrderBook.snapshot_message_from_exchange(
                                 msg["data"],
                                 time.time(),
-                                metadata={"trading_pair": convert_from_exchange_trading_pair(msg["channel"]
-                                                                                             .split("_")[2])}
+                                metadata={
+                                    "trading_pair": convert_from_exchange_trading_pair(msg["channel"].split("_")[-1])
+                                }
                             )
                             output.put_nowait(order_book_message)
                         else:
