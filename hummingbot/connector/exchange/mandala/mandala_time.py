@@ -14,7 +14,7 @@ class MandalaTime:
     """
     Used to monkey patch mandala client's time module to adjust request timestamp when needed
     """
-    TOKOCRYPTO_TIME_API = "https://trade.mandala.exchange/open/v1/common/time"
+    MANDALA_TIME_API = "https://trade.mandala.exchange/open/v1/common/time"
     NaN = float("nan")
     _bt_logger = None
     _bt_shared_instance = None
@@ -100,7 +100,7 @@ class MandalaTime:
         try:
             local_before_ms: float = time.perf_counter() * 1e3
             async with aiohttp.ClientSession() as session:
-                async with session.get(self.TOKOCRYPTO_TIME_API) as resp:
+                async with session.get(self.MANDALA_TIME_API) as resp:
                     resp_data: Dict[str, float] = await resp.json()
                     mandala_server_time_ms: float = float(resp_data["timestamp"])
                     local_after_ms: float = time.perf_counter() * 1e3

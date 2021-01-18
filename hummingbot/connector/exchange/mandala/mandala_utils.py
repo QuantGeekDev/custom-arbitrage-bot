@@ -34,7 +34,8 @@ def convert_from_exchange_trading_pair(exchange_trading_pair: str) -> Optional[s
 def convert_to_exchange_trading_pair(hb_trading_pair: str) -> str:
     # Binance does not split BASEQUOTE (BTCUSDT)
     return hb_trading_pair.replace("-", "")
-    
+
+
 def convert_to_mandala_exchange_trading_pair(hb_trading_pair: str) -> str:
     # Mandala uses underscore in split BASEQUOTE (BTC_USDT)
     return hb_trading_pair.replace("-", "_")

@@ -173,7 +173,7 @@ class Client(object):
                 # merge requests params into kwargs
                 kwargs.update(kwargs['data']['requests_params'])
                 del(kwargs['data']['requests_params'])
-        
+
         if signed:
             # generate signature
             kwargs['data']['timestamp'] = int(time.time() * 1000)
@@ -196,7 +196,7 @@ class Client(object):
             del(kwargs['data'])
 
         # print('_request', kwargs)
-        
+
         self.response = getattr(self.session, method)(uri, **kwargs)
         return self._handle_response()
 

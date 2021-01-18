@@ -73,7 +73,6 @@ class MandalaAPIOrderBookDataSource(OrderBookTrackerDataSource):
     @staticmethod
     @cachetools.func.ttl_cache(ttl=10)
     def get_mid_price(trading_pair: str, domain="com") -> Optional[Decimal]:
-        from hummingbot.connector.exchange.mandala.mandala_utils import convert_to_exchange_trading_pair
         url = SNAPSHOT_REST_URL.format(domain)
         resp = requests.get(url=f"{url}?limit=5&symbol={convert_to_mandala_exchange_trading_pair(trading_pair)}")
         record = resp.json()

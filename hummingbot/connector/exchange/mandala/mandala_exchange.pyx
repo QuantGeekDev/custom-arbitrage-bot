@@ -67,7 +67,7 @@ from .mandala_in_flight_order import MandalaInFlightOrder
 from .mandala_utils import (
     convert_from_exchange_trading_pair,
     convert_to_exchange_trading_pair,
-	convert_to_mandala_exchange_trading_pair)
+    convert_to_mandala_exchange_trading_pair)
 
 s_logger = None
 s_decimal_0 = Decimal(0)
@@ -112,8 +112,8 @@ cdef class MandalaExchange(ExchangeBase):
     SHORT_POLL_INTERVAL = 5.0
     UPDATE_ORDER_STATUS_MIN_INTERVAL = 10.0
     LONG_POLL_INTERVAL = 120.0
-    TOKOCRYPTO_TRADE_TOPIC_NAME = "mandala-trade.serialized"
-    TOKOCRYPTO_USER_STREAM_TOPIC_NAME = "mandala-user-stream.serialized"
+    MANDALA_TRADE_TOPIC_NAME = "mandala-trade.serialized"
+    MANDALA_USER_STREAM_TOPIC_NAME = "mandala-user-stream.serialized"
 
     ORDER_NOT_EXIST_CONFIRMATION_COUNT = 3
 
