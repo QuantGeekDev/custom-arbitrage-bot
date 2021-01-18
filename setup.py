@@ -46,6 +46,7 @@ def main():
         "hummingbot.connector.exchange.coinbase_pro",
         "hummingbot.connector.exchange.dydx",
         "hummingbot.connector.exchange.huobi",
+        "hummingbot.connector.exchange.mandala",
         "hummingbot.connector.exchange.radar_relay",
         "hummingbot.connector.exchange.kraken",
         "hummingbot.connector.exchange.crypto_com",
