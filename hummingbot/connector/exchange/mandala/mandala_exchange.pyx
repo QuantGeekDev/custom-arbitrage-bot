@@ -701,15 +701,15 @@ cdef class MandalaExchange(ExchangeBase):
             order_result = await self.query_api(self._mandala_client.create_order, **api_params)
             exchange_order_id = str(order_result["data"]["orderId"])
             self.c_start_tracking_order(exchange_order_id,
-                                    exchange_order_id,
-                                    trading_pair,
-                                    trade_type,
-                                    price,
-                                    amount,
-                                    order_type
-                                    )
+                                        exchange_order_id,
+                                        trading_pair,
+                                        trade_type,
+                                        price,
+                                        amount,
+                                        order_type
+                                        )
             self.logger().info(f"Created {type_str} {side_str} order {exchange_order_id} for "
-                                   f"{amount} {trading_pair}.")
+                               f"{amount} {trading_pair}.")
 
             event_tag = self.MARKET_BUY_ORDER_CREATED_EVENT_TAG if trade_type is TradeType.BUY \
                 else self.MARKET_SELL_ORDER_CREATED_EVENT_TAG
