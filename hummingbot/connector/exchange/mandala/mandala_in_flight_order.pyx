@@ -9,6 +9,7 @@ from hummingbot.core.event.events import (
     TradeType
 )
 from hummingbot.connector.in_flight_order_base import InFlightOrderBase
+from hummingbot.connector.exchange.mandala.mandala.client import Client as MandalaClient
 
 s_decimal_0 = Decimal(0)
 
@@ -21,7 +22,7 @@ cdef class MandalaInFlightOrder(InFlightOrderBase):
                  trade_type: TradeType,
                  price: Decimal,
                  amount: Decimal,
-                 initial_state: str = "NEW"):
+                 initial_state: str = "0"):
         super().__init__(
             client_order_id,
             exchange_order_id,
@@ -36,15 +37,15 @@ cdef class MandalaInFlightOrder(InFlightOrderBase):
 
     @property
     def is_done(self) -> bool:
-        return self.last_state in {"FILLED", "CANCELED", "PENDING_CANCEL", "REJECTED", "EXPIRED"}
+        return self.last_state in {MandalaClient.ORDER_STATUS_FILLED, MandalaClient.ORDER_STATUS_CANCELED, MandalaClient.ORDER_STATUS_PENDING_CANCEL, MandalaClient.ORDER_STATUS_REJECTED, MandalaClient.ORDER_STATUS_EXPIRED}
 
     @property
     def is_failure(self) -> bool:
-        return self.last_state in {"CANCELED", "PENDING_CANCEL", "REJECTED", "EXPIRED"}
+        return self.last_state in {MandalaClient.ORDER_STATUS_CANCELED, MandalaClient.ORDER_STATUS_PENDING_CANCEL, MandalaClient.ORDER_STATUS_REJECTED, MandalaClient.ORDER_STATUS_EXPIRED}
 
     @property
     def is_cancelled(self) -> bool:
-        return self.last_state in {"CANCELED"}
+        return self.last_state in {MandalaClient.ORDER_STATUS_CANCELED}
 
     @classmethod
     def from_json(cls, data: Dict[str, Any]) -> InFlightOrderBase:

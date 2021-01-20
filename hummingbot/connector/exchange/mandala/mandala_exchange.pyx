@@ -7,10 +7,6 @@ from aiokafka import (
 )
 import asyncio
 from async_timeout import timeout
-
-# from binance.client import Client as MandalaClient
-# from binance import client as mandala_client_module
-# from binance.exceptions import BinanceAPIException
 from hummingbot.connector.exchange.mandala.mandala.client import Client as MandalaClient
 from hummingbot.connector.exchange.mandala.mandala import client as mandala_client_module
 from hummingbot.connector.exchange.mandala.mandala.exceptions import MandalaAPIException
@@ -393,9 +389,8 @@ cdef class MandalaExchange(ExchangeBase):
                         app_warning_msg=f"Failed to fetch trade update for {trading_pair}."
                     )
                     continue
-                print(trades)
+
                 for trade in trades:
-                    print('trade', trade)
                     order_id = str(trade["orderId"])
                     if order_id in order_map:
                         tracked_order = order_map[order_id]
@@ -436,11 +431,13 @@ cdef class MandalaExchange(ExchangeBase):
                      for o in tracked_orders]
             self.logger().debug("Polling for order status updates of %d orders.", len(tasks))
             results = await safe_gather(*tasks, return_exceptions=True)
-            for order_update, tracked_order in zip(results, tracked_orders):
+            orderResult = []
+            orderResult.append(results[0]["data"])
+            for order_update, tracked_order in zip(orderResult, tracked_orders):
                 client_order_id = tracked_order.client_order_id
 
                 # If the order has already been cancelled or has failed do nothing
-                if client_order_id not in self._in_flight_orders:
+                if client_order_id not in str(self._in_flight_orders):
                     continue
 
                 if isinstance(order_update, Exception):
@@ -464,10 +461,10 @@ cdef class MandalaExchange(ExchangeBase):
                     continue
 
                 # Update order execution status
-                tracked_order.last_state = order_update["status"]
-                order_type = MandalaExchange.to_hb_order_type(order_update["type"])
+                tracked_order.last_state = str(order_update["status"])
+                order_type = str(order_update["type"])
                 executed_amount_base = Decimal(order_update["executedQty"])
-                executed_amount_quote = Decimal(order_update["cummulativeQuoteQty"])
+                executed_amount_quote = Decimal(order_update["executedQuoteQty"])
 
                 if tracked_order.is_done:
                     if not tracked_order.is_failure:
@@ -668,6 +665,10 @@ cdef class MandalaExchange(ExchangeBase):
     def to_hb_order_type(mandala_type: str) -> OrderType:
         return OrderType[mandala_type]
 
+    @staticmethod
+    def to_hb_trade_type(mandala_trade_type: str) -> TradeType:
+        return TradeType[mandala_trade_type]
+
     def supported_order_types(self):
         return [OrderType.LIMIT]
 
@@ -696,26 +697,18 @@ cdef class MandalaExchange(ExchangeBase):
                       "type": type_str,
                       "clientId": order_id,
                       "price": price_str}
-        # if order_type == OrderType.LIMIT:
-        #     api_params["timeInForce"] = MandalaClient.TIME_IN_FORCE_GTC
-        self.c_start_tracking_order(order_id,
-                                    "",
+        try:
+            order_result = await self.query_api(self._mandala_client.create_order, **api_params)
+            exchange_order_id = str(order_result["data"]["orderId"])
+            self.c_start_tracking_order(exchange_order_id,
+                                    exchange_order_id,
                                     trading_pair,
                                     trade_type,
                                     price,
                                     amount,
                                     order_type
                                     )
-        try:
-            # print(api_params)
-            order_result = await self.query_api(self._mandala_client.create_order, **api_params)
-            # print(order_result)
-            exchange_order_id = str(order_result["data"]["orderId"])
-            tracked_order = self._in_flight_orders.get(order_id)
-            if tracked_order is not None:
-                tracked_order.client_order_id = exchange_order_id
-                tracked_order.exchange_order_id = exchange_order_id
-                self.logger().info(f"Created {type_str} {side_str} order {order_id}/{exchange_order_id} for "
+            self.logger().info(f"Created {type_str} {side_str} order {exchange_order_id} for "
                                    f"{amount} {trading_pair}.")
 
             event_tag = self.MARKET_BUY_ORDER_CREATED_EVENT_TAG if trade_type is TradeType.BUY \
@@ -801,8 +794,8 @@ cdef class MandalaExchange(ExchangeBase):
                 for cr in cancellation_results:
                     if isinstance(cr, MandalaAPIException):
                         continue
-                    if isinstance(cr, dict) and "orderId" in cr:
-                        client_order_id = cr.get("orderId")
+                    if isinstance(cr, dict) and "orderId" in str(cr):
+                        client_order_id = str(cr["data"]["orderId"])
                         order_id_set.remove(client_order_id)
                         successful_cancellations.append(CancellationResult(client_order_id, True))
         except Exception:
