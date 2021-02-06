@@ -46,18 +46,6 @@ liquidity_mining_config_map = {
                   prompt="Enter a list of markets (comma separated, e.g. LTC-USDT,ETH-USDT) >>> ",
                   type_str="str",
                   prompt_on_new=True),
-    "token":
-        ConfigVar(key="token",
-                  prompt="What asset (base or quote) do you want to use to provide liquidity? >>> ",
-                  type_str="str",
-                  validator=token_validate,
-                  prompt_on_new=True),
-    "order_amount":
-        ConfigVar(key="order_amount",
-                  prompt=order_size_prompt,
-                  type_str="decimal",
-                  validator=lambda v: validate_decimal(v, 0, inclusive=False),
-                  prompt_on_new=True),
     "spread":
         ConfigVar(key="spread",
                   prompt="How far away from the mid price do you want to place bid and ask orders? "
@@ -65,11 +53,13 @@ liquidity_mining_config_map = {
                   type_str="decimal",
                   validator=lambda v: validate_decimal(v, 0, 100, inclusive=False),
                   prompt_on_new=True),
-    "target_base_pct":
-        ConfigVar(key="target_base_pct",
-                  prompt="For each pair, what is your target base asset percentage? (Enter 20 to indicate 20%) >>> ",
-                  type_str="decimal",
-                  validator=lambda v: validate_decimal(v, 0, 100, inclusive=False),
+    "reserved_balances":
+        ConfigVar(key="reserved_balances",
+                  prompt="Enter a list of tokens and their reserved balance (to not be used by the bot), "
+                         " e.g. BTC:0.1,BNB:1 >>> ",
+                  type_str="str",
+                  default="",
+                  validator=lambda s: None,
                   prompt_on_new=True),
     "order_refresh_time":
         ConfigVar(key="order_refresh_time",

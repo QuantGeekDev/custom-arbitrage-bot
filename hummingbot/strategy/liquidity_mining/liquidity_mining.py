@@ -15,9 +15,7 @@ from .data_types import Proposal, PriceSize
 from hummingbot.core.event.events import OrderType, TradeType
 from hummingbot.core.data_type.limit_order import LimitOrder
 from hummingbot.core.utils.estimate_fee import estimate_fee
-from hummingbot.strategy.pure_market_making.inventory_skew_calculator import (
-    calculate_bid_ask_ratios_from_base_asset_ratio
-)
+from hummingbot.core.utils.market_price import usd_value
 NaN = float("nan")
 s_decimal_zero = Decimal(0)
 s_decimal_nan = Decimal("NaN")
@@ -36,10 +34,8 @@ class LiquidityMiningStrategy(StrategyPyBase):
     def __init__(self,
                  exchange: ExchangeBase,
                  market_infos: Dict[str, MarketTradingPairTuple],
-                 token: str,
-                 order_amount: Decimal,
                  spread: Decimal,
-                 target_base_pct: Decimal,
+                 reserved_balances: Decimal,
                  order_refresh_time: float,
                  order_refresh_tolerance_pct: Decimal,
                  inventory_range_multiplier: Decimal = Decimal("1"),
@@ -51,12 +47,10 @@ class LiquidityMiningStrategy(StrategyPyBase):
         super().__init__()
         self._exchange = exchange
         self._market_infos = market_infos
-        self._token = token
-        self._order_amount = order_amount
         self._spread = spread
+        self._reserved_balances = reserved_balances
         self._order_refresh_time = order_refresh_time
         self._order_refresh_tolerance_pct = order_refresh_tolerance_pct
-        self._target_base_pct = target_base_pct
         self._inventory_range_multiplier = inventory_range_multiplier
         self._volatility_interval = volatility_interval
         self._avg_volatility_period = avg_volatility_period
@@ -95,11 +89,10 @@ class LiquidityMiningStrategy(StrategyPyBase):
                 self.logger().info(f"{self._exchange.name} is ready. Trading started.")
                 self.create_budget_allocation()
 
+        self._token_balances = self.adjusted_available_balances()
         self.update_mid_prices()
         self.update_volatility()
         proposals = self.create_base_proposals()
-        self._token_balances = self.adjusted_available_balances()
-        self.apply_inventory_skew(proposals)
         self.apply_budget_constraint(proposals)
         self.cancel_active_orders(proposals)
         self.execute_orders_proposal(proposals)
@@ -107,13 +100,12 @@ class LiquidityMiningStrategy(StrategyPyBase):
         self._last_timestamp = timestamp
 
     async def active_orders_df(self) -> pd.DataFrame:
-        size_q_col = f"Size ({self._token})" if self.is_token_a_quote_token() else "Size (Quote)"
-        columns = ["Market", "Side", "Price", "Spread", "Amount", size_q_col, "Age"]
+        columns = ["Market", "Side", "Price", "Spread", "Amount", "Size ($)", "Age"]
         data = []
         for order in self.active_orders:
             mid_price = self._market_infos[order.trading_pair].get_mid_price()
             spread = 0 if mid_price == 0 else abs(order.price - mid_price) / mid_price
-            size_q = order.quantity * mid_price
+            size_usd = await usd_value(order.trading_pair.split("-")[0], order.quantity)
             age = "n/a"
             # // indicates order is a paper order so 'n/a'. For real orders, calculate age.
             if "//" not in order.client_order_id:
@@ -125,7 +117,7 @@ class LiquidityMiningStrategy(StrategyPyBase):
                 float(order.price),
                 f"{spread:.2%}",
                 float(order.quantity),
-                float(size_q),
+                f"{size_usd:.0f}",
                 age
             ])
 
@@ -191,37 +183,60 @@ class LiquidityMiningStrategy(StrategyPyBase):
             mid_price = market_info.get_mid_price()
             buy_price = mid_price * (Decimal("1") - spread)
             buy_price = self._exchange.quantize_order_price(market, buy_price)
-            buy_size = self.base_order_size(market, buy_price)
+            buy_size = self.calc_buy_size(market, buy_price)
             sell_price = mid_price * (Decimal("1") + spread)
             sell_price = self._exchange.quantize_order_price(market, sell_price)
-            sell_size = self.base_order_size(market, sell_price)
+            sell_size = self.calc_sell_size(market)
             proposals.append(Proposal(market, PriceSize(buy_price, buy_size), PriceSize(sell_price, sell_size)))
         return proposals
 
+    def calc_buy_size(self, market: str, price: Decimal):
+        quote_size = self._buy_budgets[market]
+        buy_fee = estimate_fee(self._exchange.name, True)
+        buy_size = quote_size / (price * (Decimal("1") + buy_fee.percent))
+        buy_size = self._exchange.quantize_order_amount(market, buy_size)
+        return buy_size
+
+    def calc_sell_size(self, market: str):
+        sell_size = self._sell_budgets[market]
+        sell_size = self._exchange.quantize_order_amount(market, sell_size)
+        return sell_size
+
     def create_budget_allocation(self):
         # Equally assign buy and sell budgets to all markets
+        # self._sell_budgets = {m: s_decimal_zero for m in self._market_infos}
+        # self._buy_budgets = {m: s_decimal_zero for m in self._market_infos}
+        # if self._token == list(self._market_infos.keys())[0].split("-")[0]:
+        #     base_markets = [m for m in self._market_infos if m.split("-")[0] == self._token]
+        #     sell_size = self._exchange.get_available_balance(self._token) / len(base_markets)
+        #     for market in base_markets:
+        #         self._sell_budgets[market] = sell_size
+        #         self._buy_budgets[market] = self._exchange.get_available_balance(market.split("-")[1])
+        # else:
+        #     quote_markets = [m for m in self._market_infos if m.split("-")[1] == self._token]
+        #     buy_size = self._exchange.get_available_balance(self._token) / len(quote_markets)
+        #     for market in quote_markets:
+        #         self._buy_budgets[market] = buy_size
+        #         self._sell_budgets[market] = self._exchange.get_available_balance(market.split("-")[0])
+
+        # Equally assign buy and sell budgets to all markets
+        base_tokens = self.all_base_tokens()
         self._sell_budgets = {m: s_decimal_zero for m in self._market_infos}
-        self._buy_budgets = {m: s_decimal_zero for m in self._market_infos}
-        if self._token == list(self._market_infos.keys())[0].split("-")[0]:
-            base_markets = [m for m in self._market_infos if m.split("-")[0] == self._token]
-            sell_size = self._exchange.get_available_balance(self._token) / len(base_markets)
+        balances = self.adjusted_available_balances()
+        for base in base_tokens:
+            base_markets = [m for m in self._market_infos if m.split("-")[0] == base]
+            sell_size = balances[base] / len(base_markets)
             for market in base_markets:
                 self._sell_budgets[market] = sell_size
-                self._buy_budgets[market] = self._exchange.get_available_balance(market.split("-")[1])
-        else:
-            quote_markets = [m for m in self._market_infos if m.split("-")[1] == self._token]
-            buy_size = self._exchange.get_available_balance(self._token) / len(quote_markets)
+        # Then assign all the buy order size based on the quote token balance available
+        quote_tokens = self.all_quote_tokens()
+        self._buy_budgets = {m: s_decimal_zero for m in self._market_infos}
+        for quote in quote_tokens:
+            quote_markets = [m for m in self._market_infos if m.split("-")[1] == quote]
+            buy_size = balances[quote] / len(quote_markets)
             for market in quote_markets:
                 self._buy_budgets[market] = buy_size
-                self._sell_budgets[market] = self._exchange.get_available_balance(market.split("-")[0])
-
-    def base_order_size(self, trading_pair: str, price: Decimal = s_decimal_zero):
-        base, quote = trading_pair.split("-")
-        if self._token == base:
-            return self._order_amount
-        if price == s_decimal_zero:
-            price = self._market_infos[trading_pair].get_mid_price()
-        return self._order_amount / price
+        pass
 
     def apply_budget_constraint(self, proposals: List[Proposal]):
         balances = self._token_balances.copy()
@@ -232,7 +247,8 @@ class LiquidityMiningStrategy(StrategyPyBase):
             balances[proposal.base()] -= proposal.sell.size
 
             quote_size = proposal.buy.size * proposal.buy.price
-            quote_size = balances[proposal.quote()] if balances[proposal.quote()] < quote_size else quote_size
+            if balances[proposal.quote()] < quote_size:
+                quote_size = balances[proposal.quote()]
             buy_fee = estimate_fee(self._exchange.name, True)
             buy_size = quote_size / (proposal.buy.price * (Decimal("1") + buy_fee.percent))
             proposal.buy.size = self._exchange.quantize_order_amount(proposal.market, buy_size)
@@ -301,12 +317,6 @@ class LiquidityMiningStrategy(StrategyPyBase):
 
                 self._refresh_times[proposal.market] = self.current_timestamp + self._order_refresh_time
 
-    def is_token_a_quote_token(self):
-        quotes = self.all_quote_tokens()
-        if len(quotes) == 1 and self._token in quotes:
-            return True
-        return False
-
     def all_base_tokens(self) -> Set[str]:
         tokens = set()
         for market in self._market_infos:
@@ -342,23 +352,12 @@ class LiquidityMiningStrategy(StrategyPyBase):
                 adjusted_bals[quote] += order.quantity * order.price
             else:
                 adjusted_bals[base] += order.quantity
+        for token in tokens:
+            adjusted_bals[token] = min(adjusted_bals[token], total_bals[token])
+            reserved = self._reserved_balances.get(token, s_decimal_zero)
+            adjusted_bals[token] -= reserved
+            adjusted_bals[token] = max(adjusted_bals[token], s_decimal_zero)
         return adjusted_bals
-
-    def apply_inventory_skew(self, proposals: List[Proposal]):
-        for proposal in proposals:
-            buy_budget = self._buy_budgets[proposal.market]
-            sell_budget = self._sell_budgets[proposal.market]
-            mid_price = self._market_infos[proposal.market].get_mid_price()
-            total_order_size = proposal.sell.size + proposal.buy.size
-            bid_ask_ratios = calculate_bid_ask_ratios_from_base_asset_ratio(
-                float(sell_budget),
-                float(buy_budget),
-                float(mid_price),
-                float(self._target_base_pct),
-                float(total_order_size * self._inventory_range_multiplier)
-            )
-            proposal.buy.size *= Decimal(bid_ask_ratios.bid_ratio)
-            proposal.sell.size *= Decimal(bid_ask_ratios.ask_ratio)
 
     def did_fill_order(self, event):
         order_id = event.order_id
