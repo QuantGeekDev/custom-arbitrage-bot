@@ -23,6 +23,10 @@ async def get_binance_mid_price(trading_pair: str) -> Dict[str, Decimal]:
 @async_ttl_cache(ttl=5, maxsize=100)
 async def token_usd_values() -> Dict[str, Decimal]:
     prices = await BinanceAPIOrderBookDataSource.get_all_mid_prices()
+    return token_usd_values_by_mid_pries(prices)
+
+
+def token_usd_values_by_mid_pries(prices: Dict[str, Decimal]):
     prices = {k: v for k, v in prices.items() if k is not None}
     tokens = {t.split("-")[0] for t in prices}
     ret_val = {}

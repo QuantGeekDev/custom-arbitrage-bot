@@ -18,7 +18,7 @@ def start(self):
     avg_volatility_period = c_map.get("avg_volatility_period").value
     volatility_to_spread_multiplier = c_map.get("volatility_to_spread_multiplier").value
 
-    self._initialize_markets([(exchange, markets)])
+    self._initialize_markets([(exchange, [markets[0]])])
     exchange = self.markets[exchange]
     market_infos = {}
     for market in markets:

@@ -873,7 +873,7 @@ cdef class BinanceExchange(ExchangeBase):
                            price: Optional[Decimal] = Decimal("NaN")):
         cdef:
             TradingRule trading_rule = self._trading_rules[trading_pair]
-        amount = self.c_quantize_order_amount(trading_pair, amount)
+        amount = self.c_quantize_order_amount(trading_pair, amount, price)
         price = self.c_quantize_order_price(trading_pair, price)
         if amount < trading_rule.min_order_size:
             raise ValueError(f"Buy order amount {amount} is lower than the minimum order size "
@@ -1055,7 +1055,7 @@ cdef class BinanceExchange(ExchangeBase):
     cdef object c_quantize_order_amount(self, str trading_pair, object amount, object price=s_decimal_0):
         cdef:
             TradingRule trading_rule = self._trading_rules[trading_pair]
-            object current_price = self.c_get_price(trading_pair, False)
+            # object current_price = self.c_get_price(trading_pair, False)
             object notional_size
         global s_decimal_0
         quantized_amount = ExchangeBase.c_quantize_order_amount(self, trading_pair, amount)
@@ -1065,7 +1065,7 @@ cdef class BinanceExchange(ExchangeBase):
             return s_decimal_0
 
         if price == s_decimal_0:
-            notional_size = current_price * quantized_amount
+            notional_size = self.c_get_price(trading_pair, False) * quantized_amount
         else:
             notional_size = price * quantized_amount
 

@@ -15,7 +15,9 @@ from .data_types import Proposal, PriceSize
 from hummingbot.core.event.events import OrderType, TradeType
 from hummingbot.core.data_type.limit_order import LimitOrder
 from hummingbot.core.utils.estimate_fee import estimate_fee
-from hummingbot.core.utils.market_price import usd_value
+from hummingbot.core.utils.market_price import token_usd_values_by_mid_pries
+from hummingbot.core.utils.async_utils import safe_ensure_future
+from hummingbot.connector.exchange.binance.binance_api_order_book_data_source import BinanceAPIOrderBookDataSource
 NaN = float("nan")
 s_decimal_zero = Decimal(0)
 s_decimal_nan = Decimal("NaN")
@@ -64,11 +66,27 @@ class LiquidityMiningStrategy(StrategyPyBase):
         self._sell_budgets = {}
         self._buy_budgets = {}
         self._mid_prices = {market: [] for market in market_infos}
+        self._cur_mid_prices = {}
         self._volatility = {market: s_decimal_nan for market in self._market_infos}
         self._last_vol_reported = 0.
         self._hb_app_notification = hb_app_notification
-
+        self._mid_price_polling_task = None
         self.add_markets([exchange])
+
+    async def mid_price_polling_loop(self):
+        while True:
+            try:
+                self._cur_mid_prices = await BinanceAPIOrderBookDataSource.get_all_mid_prices()
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                self.logger().network("Unexpected error while fetching Binance mid prices.", exc_info=True)
+            finally:
+                await asyncio.sleep(0.5)
+
+    def get_mid_price(self, trading_pair: str) -> Decimal:
+        # self._market_infos[order.trading_pair].get_mid_price()
+        return self._cur_mid_prices[trading_pair]
 
     @property
     def active_orders(self):
@@ -103,9 +121,9 @@ class LiquidityMiningStrategy(StrategyPyBase):
         columns = ["Market", "Side", "Price", "Spread", "Amount", "Size ($)", "Age"]
         data = []
         for order in self.active_orders:
-            mid_price = self._market_infos[order.trading_pair].get_mid_price()
+            mid_price = self.get_mid_price(order.trading_pair)
             spread = 0 if mid_price == 0 else abs(order.price - mid_price) / mid_price
-            size_usd = await usd_value(order.trading_pair.split("-")[0], order.quantity)
+            size_usd = self.usd_value(order.trading_pair.split("-")[0]) * order.quantity
             age = "n/a"
             # // indicates order is a paper order so 'n/a'. For real orders, calculate age.
             if "//" not in order.client_order_id:
@@ -129,7 +147,7 @@ class LiquidityMiningStrategy(StrategyPyBase):
         balances = self.adjusted_available_balances()
         for market, market_info in self._market_infos.items():
             base, quote = market.split("-")
-            mid_price = market_info.get_mid_price()
+            mid_price = self.get_mid_price(market)
             base_bal = self._sell_budgets[market]
             quote_bal = self._buy_budgets[market]
             total_bal = (base_bal * mid_price) + balances[quote]
@@ -168,10 +186,11 @@ class LiquidityMiningStrategy(StrategyPyBase):
         return "\n".join(lines)
 
     def start(self, clock: Clock, timestamp: float):
-        pass
+        self._mid_price_polling_task = safe_ensure_future(self.mid_price_polling_loop())
 
     def stop(self, clock: Clock):
-        pass
+        if self._mid_price_polling_task is not None:
+            self._mid_price_polling_task.cancel()
 
     def create_base_proposals(self):
         proposals = []
@@ -180,13 +199,13 @@ class LiquidityMiningStrategy(StrategyPyBase):
             if not self._volatility[market].is_nan():
                 # volatility applies only when it is higher than the spread setting.
                 spread = max(spread, self._volatility[market] * self._volatility_to_spread_multiplier)
-            mid_price = market_info.get_mid_price()
+            mid_price = self.get_mid_price(market)
             buy_price = mid_price * (Decimal("1") - spread)
             buy_price = self._exchange.quantize_order_price(market, buy_price)
             buy_size = self.calc_buy_size(market, buy_price)
             sell_price = mid_price * (Decimal("1") + spread)
             sell_price = self._exchange.quantize_order_price(market, sell_price)
-            sell_size = self.calc_sell_size(market)
+            sell_size = self.calc_sell_size(market, sell_price)
             proposals.append(Proposal(market, PriceSize(buy_price, buy_size), PriceSize(sell_price, sell_size)))
         return proposals
 
@@ -194,13 +213,17 @@ class LiquidityMiningStrategy(StrategyPyBase):
         quote_size = self._buy_budgets[market]
         buy_fee = estimate_fee(self._exchange.name, True)
         buy_size = quote_size / (price * (Decimal("1") + buy_fee.percent))
-        buy_size = self._exchange.quantize_order_amount(market, buy_size)
+        buy_size = self._exchange.quantize_order_amount(market, buy_size, price)
         return buy_size
 
-    def calc_sell_size(self, market: str):
+    def calc_sell_size(self, market: str, price: Decimal):
         sell_size = self._sell_budgets[market]
-        sell_size = self._exchange.quantize_order_amount(market, sell_size)
+        sell_size = self._exchange.quantize_order_amount(market, sell_size, price)
         return sell_size
+
+    def usd_value(self, token: str) -> Decimal:
+        token_usd_values = token_usd_values_by_mid_pries(self._cur_mid_prices)
+        return token_usd_values.get(token, s_decimal_zero)
 
     def create_budget_allocation(self):
         # Equally assign buy and sell budgets to all markets
@@ -220,6 +243,8 @@ class LiquidityMiningStrategy(StrategyPyBase):
         #         self._sell_budgets[market] = self._exchange.get_available_balance(market.split("-")[0])
 
         # Equally assign buy and sell budgets to all markets
+        max_budget_usd = Decimal("100")
+        total_budget = {m: max_budget_usd for m in self._market_infos}
         base_tokens = self.all_base_tokens()
         self._sell_budgets = {m: s_decimal_zero for m in self._market_infos}
         balances = self.adjusted_available_balances()
@@ -227,6 +252,10 @@ class LiquidityMiningStrategy(StrategyPyBase):
             base_markets = [m for m in self._market_infos if m.split("-")[0] == base]
             sell_size = balances[base] / len(base_markets)
             for market in base_markets:
+                sell_value = sell_size * self.usd_value(base)
+                sell_value = min(total_budget[market], sell_value)
+                total_budget[market] -= sell_value
+                sell_size = sell_value / self.usd_value(base) if self.usd_value(base) > 0 else s_decimal_zero
                 self._sell_budgets[market] = sell_size
         # Then assign all the buy order size based on the quote token balance available
         quote_tokens = self.all_quote_tokens()
@@ -235,6 +264,9 @@ class LiquidityMiningStrategy(StrategyPyBase):
             quote_markets = [m for m in self._market_infos if m.split("-")[1] == quote]
             buy_size = balances[quote] / len(quote_markets)
             for market in quote_markets:
+                buy_value = buy_size * self.usd_value(quote)
+                buy_value = min(total_budget[market], buy_value)
+                buy_size = buy_value / self.usd_value(quote) if self.usd_value(quote) > 0 else s_decimal_zero
                 self._buy_budgets[market] = buy_size
         pass
 
@@ -243,7 +275,8 @@ class LiquidityMiningStrategy(StrategyPyBase):
         for proposal in proposals:
             if balances[proposal.base()] < proposal.sell.size:
                 proposal.sell.size = balances[proposal.base()]
-            proposal.sell.size = self._exchange.quantize_order_amount(proposal.market, proposal.sell.size)
+            proposal.sell.size = self._exchange.quantize_order_amount(proposal.market, proposal.sell.size,
+                                                                      proposal.sell.price)
             balances[proposal.base()] -= proposal.sell.size
 
             quote_size = proposal.buy.size * proposal.buy.price
@@ -251,7 +284,7 @@ class LiquidityMiningStrategy(StrategyPyBase):
                 quote_size = balances[proposal.quote()]
             buy_fee = estimate_fee(self._exchange.name, True)
             buy_size = quote_size / (proposal.buy.price * (Decimal("1") + buy_fee.percent))
-            proposal.buy.size = self._exchange.quantize_order_amount(proposal.market, buy_size)
+            proposal.buy.size = self._exchange.quantize_order_amount(proposal.market, buy_size, proposal.buy.price)
             balances[proposal.quote()] -= quote_size
 
     def is_within_tolerance(self, cur_orders: List[LimitOrder], proposal: Proposal):
@@ -284,7 +317,7 @@ class LiquidityMiningStrategy(StrategyPyBase):
             cur_orders = [o for o in self.active_orders if o.trading_pair == proposal.market]
             if cur_orders or self._refresh_times[proposal.market] > self.current_timestamp:
                 continue
-            mid_price = self._market_infos[proposal.market].get_mid_price()
+            mid_price = self.get_mid_price(proposal.market)
             spread = s_decimal_zero
             if proposal.buy.size > 0:
                 spread = abs(proposal.buy.price - mid_price) / mid_price
@@ -380,7 +413,7 @@ class LiquidityMiningStrategy(StrategyPyBase):
 
     def update_mid_prices(self):
         for market in self._market_infos:
-            mid_price = self._market_infos[market].get_mid_price()
+            mid_price = self.get_mid_price(market)
             self._mid_prices[market].append(mid_price)
             # To avoid memory leak, we store only the last part of the list needed for volatility calculation
             max_len = self._volatility_interval * self._avg_volatility_period

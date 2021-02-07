@@ -234,8 +234,8 @@ cdef class ExchangeBase(ConnectorBase):
     def quantize_order_price(self, trading_pair: str, price: Decimal) -> Decimal:
         return self.c_quantize_order_price(trading_pair, price)
 
-    def quantize_order_amount(self, trading_pair: str, amount: Decimal) -> Decimal:
-        return self.c_quantize_order_amount(trading_pair, amount)
+    def quantize_order_amount(self, trading_pair: str, amount: Decimal, price: Decimal = s_decimal_NaN) -> Decimal:
+        return self.c_quantize_order_amount(trading_pair, amount, price)
 
     def supported_order_types(self):
         return [OrderType.LIMIT, OrderType.MARKET]
