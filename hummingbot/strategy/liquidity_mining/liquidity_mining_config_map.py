@@ -61,6 +61,12 @@ liquidity_mining_config_map = {
                   default="",
                   validator=lambda s: None,
                   prompt_on_new=True),
+    "market_budget_usd":
+        ConfigVar(key="market_budget_usd",
+                  prompt="What is budget, in USD amount, for each market?  >>> ",
+                  type_str="decimal",
+                  validator=lambda v: validate_decimal(v, 0, inclusive=False),
+                  prompt_on_new=True),
     "order_refresh_time":
         ConfigVar(key="order_refresh_time",
                   prompt="How often do you want to cancel and replace bids and asks "

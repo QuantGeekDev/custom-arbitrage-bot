@@ -11,6 +11,7 @@ def start(self):
     reserved_bals_text = c_map.get("reserved_balances").value or ""
     reserved_bals = reserved_bals_text.split(",")
     reserved_bals = {r.split(":")[0]: Decimal(r.split(":")[1]) for r in reserved_bals}
+    market_budget_usd = c_map.get("market_budget_usd").value
     order_refresh_time = c_map.get("order_refresh_time").value
     order_refresh_tolerance_pct = c_map.get("order_refresh_tolerance_pct").value / Decimal("100")
     inventory_range_multiplier = c_map.get("inventory_range_multiplier").value
@@ -29,6 +30,7 @@ def start(self):
         market_infos=market_infos,
         spread=spread,
         reserved_balances=reserved_bals,
+        market_budget_usd=market_budget_usd,
         order_refresh_time=order_refresh_time,
         order_refresh_tolerance_pct=order_refresh_tolerance_pct,
         inventory_range_multiplier=inventory_range_multiplier,

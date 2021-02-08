@@ -38,6 +38,7 @@ class LiquidityMiningStrategy(StrategyPyBase):
                  market_infos: Dict[str, MarketTradingPairTuple],
                  spread: Decimal,
                  reserved_balances: Decimal,
+                 market_budget_usd: Decimal,
                  order_refresh_time: float,
                  order_refresh_tolerance_pct: Decimal,
                  inventory_range_multiplier: Decimal = Decimal("1"),
@@ -51,6 +52,7 @@ class LiquidityMiningStrategy(StrategyPyBase):
         self._market_infos = market_infos
         self._spread = spread
         self._reserved_balances = reserved_balances
+        self._market_budget_usd = market_budget_usd
         self._order_refresh_time = order_refresh_time
         self._order_refresh_tolerance_pct = order_refresh_tolerance_pct
         self._inventory_range_multiplier = inventory_range_multiplier
@@ -120,7 +122,8 @@ class LiquidityMiningStrategy(StrategyPyBase):
     async def active_orders_df(self) -> pd.DataFrame:
         columns = ["Market", "Side", "Price", "Spread", "Amount", "Size ($)", "Age"]
         data = []
-        for order in self.active_orders:
+        active_orders = sorted(self.active_orders, key=lambda o: (o.trading_pair, o.is_buy))
+        for order in active_orders:
             mid_price = self.get_mid_price(order.trading_pair)
             spread = 0 if mid_price == 0 else abs(order.price - mid_price) / mid_price
             size_usd = self.usd_value(order.trading_pair.split("-")[0]) * order.quantity
@@ -243,7 +246,7 @@ class LiquidityMiningStrategy(StrategyPyBase):
         #         self._sell_budgets[market] = self._exchange.get_available_balance(market.split("-")[0])
 
         # Equally assign buy and sell budgets to all markets
-        max_budget_usd = Decimal("100")
+        max_budget_usd = self._market_budget_usd
         total_budget = {m: max_budget_usd for m in self._market_infos}
         base_tokens = self.all_base_tokens()
         self._sell_budgets = {m: s_decimal_zero for m in self._market_infos}
