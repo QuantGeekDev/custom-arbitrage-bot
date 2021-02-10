@@ -60,7 +60,6 @@ class LiquidityMiningStrategy(StrategyPyBase):
         self._avg_volatility_period = avg_volatility_period
         self._volatility_to_spread_multiplier = volatility_to_spread_multiplier
         self._ev_loop = asyncio.get_event_loop()
-        self._last_timestamp = 0
         self._status_report_interval = status_report_interval
         self._ready_to_trade = False
         self._refresh_times = {market: 0 for market in market_infos}
@@ -73,6 +72,7 @@ class LiquidityMiningStrategy(StrategyPyBase):
         self._last_vol_reported = 0.
         self._hb_app_notification = hb_app_notification
         self._mid_price_polling_task = None
+        self._start_time_stamp = 0.
         self.add_markets([exchange])
 
     async def mid_price_polling_loop(self):
@@ -108,6 +108,7 @@ class LiquidityMiningStrategy(StrategyPyBase):
             else:
                 self.logger().info(f"{self._exchange.name} is ready. Trading started.")
                 self.create_budget_allocation()
+                self._start_time_stamp = self.current_timestamp
 
         self._token_balances = self.adjusted_available_balances()
         self.update_mid_prices()
@@ -117,10 +118,8 @@ class LiquidityMiningStrategy(StrategyPyBase):
         self.cancel_active_orders(proposals)
         self.execute_orders_proposal(proposals)
 
-        self._last_timestamp = timestamp
-
     async def active_orders_df(self) -> pd.DataFrame:
-        columns = ["Market", "Side", "Price", "Spread", "Amount", "Size ($)", "Age"]
+        columns = ["Market", "Side", "Spread", "Size ($)", "Age"]
         data = []
         active_orders = sorted(self.active_orders, key=lambda o: (o.trading_pair, o.is_buy))
         for order in active_orders:
@@ -135,9 +134,7 @@ class LiquidityMiningStrategy(StrategyPyBase):
             data.append([
                 order.trading_pair,
                 "buy" if order.is_buy else "sell",
-                float(order.price),
                 f"{spread:.2%}",
-                float(order.quantity),
                 f"{size_usd:.0f}",
                 age
             ])
@@ -146,23 +143,14 @@ class LiquidityMiningStrategy(StrategyPyBase):
 
     def market_status_df(self) -> pd.DataFrame:
         data = []
-        columns = ["Exchange", "Market", "Mid Price", "Volatility", "Base Bal", "Quote Bal", " Base %"]
-        balances = self.adjusted_available_balances()
+        columns = ["Market", "Mid Price", "Volatility", "Spread Bias"]
         for market, market_info in self._market_infos.items():
-            base, quote = market.split("-")
             mid_price = self.get_mid_price(market)
-            base_bal = self._sell_budgets[market]
-            quote_bal = self._buy_budgets[market]
-            total_bal = (base_bal * mid_price) + balances[quote]
-            base_pct = (base_bal * mid_price) / total_bal if total_bal > 0 else s_decimal_zero
             data.append([
-                self._exchange.display_name,
                 market,
                 float(mid_price),
                 "" if self._volatility[market].is_nan() else f"{self._volatility[market]:.2%}",
-                float(base_bal),
-                float(quote_bal),
-                f"{base_pct:.0%}"
+                "" if self._volatility[market].is_nan() else f"{self.calc_spread_bias(market):.2%}",
             ])
         return pd.DataFrame(data=data, columns=columns).replace(np.nan, '', regex=True)
 
@@ -195,18 +183,31 @@ class LiquidityMiningStrategy(StrategyPyBase):
         if self._mid_price_polling_task is not None:
             self._mid_price_polling_task.cancel()
 
+    def calc_spread_bias(self, market: str) -> Decimal:
+        high = max(self._mid_prices[market])
+        low = min(self._mid_prices[market])
+        mid = ((high - low) / Decimal("2")) + low
+        mid_price = self.get_mid_price(market)
+        return ((mid_price - mid) / mid) * Decimal("2")
+
     def create_base_proposals(self):
         proposals = []
         for market, market_info in self._market_infos.items():
             spread = self._spread
+            if self.current_timestamp - self._start_time_stamp < self._volatility_interval * 2:
+                spread *= Decimal("3")
+            bid_spread, ask_spread = spread, spread
             if not self._volatility[market].is_nan():
                 # volatility applies only when it is higher than the spread setting.
                 spread = max(spread, self._volatility[market] * self._volatility_to_spread_multiplier)
+                bias = self.calc_spread_bias(market)
+                bid_spread = spread * (Decimal("1") - bias)
+                ask_spread = spread * (Decimal("1") + bias)
             mid_price = self.get_mid_price(market)
-            buy_price = mid_price * (Decimal("1") - spread)
+            buy_price = mid_price * (Decimal("1") - bid_spread)
             buy_price = self._exchange.quantize_order_price(market, buy_price)
             buy_size = self.calc_buy_size(market, buy_price)
-            sell_price = mid_price * (Decimal("1") + spread)
+            sell_price = mid_price * (Decimal("1") + ask_spread)
             sell_price = self._exchange.quantize_order_price(market, sell_price)
             sell_size = self.calc_sell_size(market, sell_price)
             proposals.append(Proposal(market, PriceSize(buy_price, buy_size), PriceSize(sell_price, sell_size)))
@@ -418,8 +419,8 @@ class LiquidityMiningStrategy(StrategyPyBase):
         for market in self._market_infos:
             mid_price = self.get_mid_price(market)
             self._mid_prices[market].append(mid_price)
-            # To avoid memory leak, we store only the last part of the list needed for volatility calculation
-            max_len = self._volatility_interval * self._avg_volatility_period
+            # To avoid memory leak, we store only the last part of the list needed for volatility calculation and spread bias
+            max_len = self._volatility_interval * self._avg_volatility_period * 10
             self._mid_prices[market] = self._mid_prices[market][-1 * max_len:]
 
     def update_volatility(self):
@@ -436,11 +437,6 @@ class LiquidityMiningStrategy(StrategyPyBase):
                 atr.append((max(prices) - min(prices)) / min(prices))
             if atr:
                 self._volatility[market] = mean(atr)
-        if self._last_vol_reported < self.current_timestamp - self._volatility_interval:
-            for market, vol in self._volatility.items():
-                if not vol.is_nan():
-                    self.logger().info(f"{market} volatility: {vol:.2%}")
-            self._last_vol_reported = self.current_timestamp
 
     def notify_hb_app(self, msg: str):
         if self._hb_app_notification:
