@@ -143,12 +143,16 @@ class LiquidityMiningStrategy(StrategyPyBase):
 
     def market_status_df(self) -> pd.DataFrame:
         data = []
-        columns = ["Market", "Mid Price", "Volatility", "Spread Bias"]
+        columns = ["Market", "Mid Price", "Hist Mid", "Volatility", "Spread Bias"]
         for market, market_info in self._market_infos.items():
             mid_price = self.get_mid_price(market)
+            high = max(self._mid_prices[market])
+            low = min(self._mid_prices[market])
+            mid = ((high - low) / Decimal("2")) + low
             data.append([
                 market,
                 float(mid_price),
+                float(mid),
                 "" if self._volatility[market].is_nan() else f"{self._volatility[market]:.2%}",
                 "" if self._volatility[market].is_nan() else f"{self.calc_spread_bias(market):.2%}",
             ])
