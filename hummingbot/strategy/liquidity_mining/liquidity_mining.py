@@ -199,10 +199,10 @@ class LiquidityMiningStrategy(StrategyPyBase):
             bid_spread, ask_spread = spread, spread
             if not self._volatility[market].is_nan():
                 # volatility applies only when it is higher than the spread setting.
-                spread = max(spread, self._volatility[market] * self._volatility_to_spread_multiplier)
+                vol_spread = self._volatility[market] * self._volatility_to_spread_multiplier
                 bias = self.calc_spread_bias(market)
-                bid_spread = spread * (Decimal("1") - bias)
-                ask_spread = spread * (Decimal("1") + bias)
+                bid_spread = max(spread, vol_spread * (Decimal("1") - bias))
+                ask_spread = max(spread, vol_spread * (Decimal("1") + bias))
             mid_price = self.get_mid_price(market)
             buy_price = mid_price * (Decimal("1") - bid_spread)
             buy_price = self._exchange.quantize_order_price(market, buy_price)
