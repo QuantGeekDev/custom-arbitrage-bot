@@ -101,8 +101,8 @@ class LiquidityMiningStrategy(StrategyPyBase):
         :param timestamp: current tick timestamp
         """
         if not self._ready_to_trade:
-            self._ready_to_trade = self._exchange.ready
-            if not self._exchange.ready:
+            self._ready_to_trade = self._exchange.ready and len(self._cur_mid_prices) > 0
+            if not self._ready_to_trade:
                 self.logger().warning(f"{self._exchange.name} is not ready. Please wait...")
                 return
             else:
@@ -263,8 +263,8 @@ class LiquidityMiningStrategy(StrategyPyBase):
                 sell_value = sell_size * self.usd_value(base)
                 sell_value = min(total_budget[market], sell_value)
                 total_budget[market] -= sell_value
-                sell_size = sell_value / self.usd_value(base) if self.usd_value(base) > 0 else s_decimal_zero
-                self._sell_budgets[market] = sell_size
+                if self.usd_value(base) > 0:
+                    self._sell_budgets[market] = sell_value / self.usd_value(base)
         # Then assign all the buy order size based on the quote token balance available
         quote_tokens = self.all_quote_tokens()
         self._buy_budgets = {m: s_decimal_zero for m in self._market_infos}
@@ -274,8 +274,8 @@ class LiquidityMiningStrategy(StrategyPyBase):
             for market in quote_markets:
                 buy_value = buy_size * self.usd_value(quote)
                 buy_value = min(total_budget[market], buy_value)
-                buy_size = buy_value / self.usd_value(quote) if self.usd_value(quote) > 0 else s_decimal_zero
-                self._buy_budgets[market] = buy_size
+                if self.usd_value(quote) > 0:
+                    self._buy_budgets[market] = buy_value / self.usd_value(quote)
         pass
 
     def apply_budget_constraint(self, proposals: List[Proposal]):
