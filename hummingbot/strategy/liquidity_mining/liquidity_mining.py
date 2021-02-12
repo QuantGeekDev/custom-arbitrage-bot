@@ -188,6 +188,7 @@ class LiquidityMiningStrategy(StrategyPyBase):
             spread = self._spread
             if self.current_timestamp - self._start_time_stamp < self._volatility_interval * 2:
                 spread *= Decimal("3")
+            spread = max(spread, self._volatility[market] * self._volatility_to_spread_multiplier)
             mid_price = self.get_mid_price(market)
             buy_price = mid_price * (Decimal("1") - spread)
             buy_price = self._exchange.quantize_order_price(market, buy_price)
