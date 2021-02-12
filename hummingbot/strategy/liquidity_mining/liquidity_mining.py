@@ -143,18 +143,13 @@ class LiquidityMiningStrategy(StrategyPyBase):
 
     def market_status_df(self) -> pd.DataFrame:
         data = []
-        columns = ["Market", "Mid Price", "Hist Mid", "Volatility", "Spread Bias"]
+        columns = ["Market", "Mid Price", "Volatility"]
         for market, market_info in self._market_infos.items():
             mid_price = self.get_mid_price(market)
-            high = max(self._mid_prices[market])
-            low = min(self._mid_prices[market])
-            mid = ((high - low) / Decimal("2")) + low
             data.append([
                 market,
                 float(mid_price),
-                float(mid),
                 "" if self._volatility[market].is_nan() else f"{self._volatility[market]:.2%}",
-                "" if self._volatility[market].is_nan() else f"{self.calc_spread_bias(market):.2%}",
             ])
         return pd.DataFrame(data=data, columns=columns).replace(np.nan, '', regex=True)
 
@@ -187,31 +182,17 @@ class LiquidityMiningStrategy(StrategyPyBase):
         if self._mid_price_polling_task is not None:
             self._mid_price_polling_task.cancel()
 
-    def calc_spread_bias(self, market: str) -> Decimal:
-        high = max(self._mid_prices[market])
-        low = min(self._mid_prices[market])
-        mid = ((high - low) / Decimal("2")) + low
-        mid_price = self.get_mid_price(market)
-        return ((mid_price - mid) / mid) * Decimal("2")
-
     def create_base_proposals(self):
         proposals = []
         for market, market_info in self._market_infos.items():
             spread = self._spread
             if self.current_timestamp - self._start_time_stamp < self._volatility_interval * 2:
                 spread *= Decimal("3")
-            bid_spread, ask_spread = spread, spread
-            if not self._volatility[market].is_nan():
-                # volatility applies only when it is higher than the spread setting.
-                vol_spread = self._volatility[market] * self._volatility_to_spread_multiplier
-                bias = self.calc_spread_bias(market)
-                bid_spread = max(spread, vol_spread * (Decimal("1") - bias))
-                ask_spread = max(spread, vol_spread * (Decimal("1") + bias))
             mid_price = self.get_mid_price(market)
-            buy_price = mid_price * (Decimal("1") - bid_spread)
+            buy_price = mid_price * (Decimal("1") - spread)
             buy_price = self._exchange.quantize_order_price(market, buy_price)
             buy_size = self.calc_buy_size(market, buy_price)
-            sell_price = mid_price * (Decimal("1") + ask_spread)
+            sell_price = mid_price * (Decimal("1") + spread)
             sell_price = self._exchange.quantize_order_price(market, sell_price)
             sell_size = self.calc_sell_size(market, sell_price)
             proposals.append(Proposal(market, PriceSize(buy_price, buy_size), PriceSize(sell_price, sell_size)))
