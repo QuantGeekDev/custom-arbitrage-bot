@@ -1,22 +1,10 @@
 from decimal import Decimal
 import logging
-import asyncio
-from typing import Dict, List, Set
-import pandas as pd
-import numpy as np
-from statistics import mean
-import time
 from hummingbot.core.clock import Clock
 from hummingbot.logger import HummingbotLogger
 from hummingbot.strategy.strategy_py_base import StrategyPyBase
 from hummingbot.connector.exchange_base import ExchangeBase
 from hummingbot.strategy.market_trading_pair_tuple import MarketTradingPairTuple
-from hummingbot.core.event.events import OrderType, TradeType
-from hummingbot.core.data_type.limit_order import LimitOrder
-from hummingbot.core.utils.estimate_fee import estimate_fee
-from hummingbot.strategy.pure_market_making.inventory_skew_calculator import (
-    calculate_bid_ask_ratios_from_base_asset_ratio
-)
 NaN = float("nan")
 s_decimal_zero = Decimal(0)
 s_decimal_nan = Decimal("NaN")
@@ -39,6 +27,7 @@ class CodejamStrategy(StrategyPyBase):
         super().__init__()
         self._exchange = exchange
         self._market_info = market_info
+        self._ready_to_trade = False
         self.add_markets([exchange])
 
     @property
@@ -72,4 +61,3 @@ class CodejamStrategy(StrategyPyBase):
 
     def stop(self, clock: Clock):
         pass
-
