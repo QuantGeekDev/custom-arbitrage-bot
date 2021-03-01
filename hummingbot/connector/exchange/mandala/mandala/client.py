@@ -1,5 +1,6 @@
 # coding=utf-8
 
+import asyncio
 import hashlib
 import hmac
 import requests
@@ -617,8 +618,7 @@ class Client(object):
         )
         return kline[0][0]
 
-    def get_historical_klines(self, symbol, interval, start_str, end_str=None,
-                              limit=500):
+    async def get_historical_klines(self, symbol, interval, start_str, end_str=None, limit=500):
         """Get Historical Klines from Mandala
 
         See dateparser docs for valid start and end string formats http://dateparser.readthedocs.io/en/latest/
@@ -698,11 +698,11 @@ class Client(object):
 
             # sleep after every 3rd call to be kind to the API
             if idx % 3 == 0:
-                time.sleep(1)
+                await asyncio.sleep(1)
 
         return output_data
 
-    def get_historical_klines_generator(self, symbol, interval, start_str, end_str=None):
+    async def get_historical_klines_generator(self, symbol, interval, start_str, end_str=None):
         """Get Historical Klines from Mandala
 
         See dateparser docs for valid start and end string formats http://dateparser.readthedocs.io/en/latest/
@@ -779,7 +779,7 @@ class Client(object):
 
             # sleep after every 3rd call to be kind to the API
             if idx % 3 == 0:
-                time.sleep(1)
+                await asyncio.sleep(1)
 
     def get_avg_price(self, **params):
         """Current average price for a symbol.
