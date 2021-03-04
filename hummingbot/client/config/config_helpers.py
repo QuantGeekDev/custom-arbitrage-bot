@@ -215,6 +215,10 @@ def get_strategy_class(strategy: str) -> Optional[Callable]:
     return getattr(mod, class_name)
 
 
+def get_strategy_configs(strategy: str) -> Dict[str, ConfigVar]:
+    return {}
+
+
 def get_strategy_config_map(strategy: str) -> Optional[Dict[str, ConfigVar]]:
     """
     Given the name of a strategy, find and load strategy-specific config map.

@@ -18,6 +18,7 @@ from hummingbot.core.clock import (
 from hummingbot import init_logging
 from hummingbot.client.config.config_helpers import (
     get_strategy_class,
+    get_strategy_configs,
     get_strategy_starter_file,
 )
 from hummingbot.client.settings import (
@@ -105,7 +106,7 @@ class StartCommand:
 
         await self.start_market_making(self.strategy_name, restore)
 
-    def _init_strategy_config(self):
+    def _init_strategy_markets(self):
         if self.strategy_config_map is None:
             # TODO: Initiate 'create' command
             self.strategy_config_map = {}
@@ -129,11 +130,11 @@ class StartCommand:
         else:
             try:
                 # NOTE: Common parameters of a strategy tend to be the exchange and markets
-                self._init_strategy_config()
+                self._init_strategy_markets()
                 strategy_class = get_strategy_class(strategy_name)
                 # TODO: Retrieve strategy specific configs
-                # strategy_configs = get_strategy_configs(strategy_name)
-                self.strategy = strategy_class(self.market_trading_pairs_map)
+                strategy_configs = get_strategy_configs(strategy_name)
+                self.strategy = strategy_class(self.market_trading_pairs_map, strategy_configs)
             except Exception as e:
                 raise e
 
