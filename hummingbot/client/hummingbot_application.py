@@ -213,20 +213,21 @@ class HummingbotApplication(*commands):
             chain=getattr(EthereumChain, chain_name),
         )
 
-    def _initialize_markets(self, market_names: List[Tuple[str, List[str]]]):
+    def _initialize_markets(self, exchange_market_details: List[Tuple[str, List[str]]]):
         # aggregate trading_pairs if there are duplicate markets
 
-        for market_name, trading_pairs in market_names:
-            if market_name not in self.market_trading_pairs_map:
-                self.market_trading_pairs_map[market_name] = []
+        # TODO: Rename self.market_trading_pairs_map to self.exchange_markets_map
+        for exchange, trading_pairs in exchange_market_details:
+            if exchange not in self.market_trading_pairs_map:
+                self.market_trading_pairs_map[exchange] = []
             for hb_trading_pair in trading_pairs:
-                self.market_trading_pairs_map[market_name].append(hb_trading_pair)
+                self.market_trading_pairs_map[exchange].append(hb_trading_pair)
 
-        for connector_name, trading_pairs in self.market_trading_pairs_map.items():
-            conn_setting = CONNECTOR_SETTINGS[connector_name]
+        for exchange, trading_pairs in self.market_trading_pairs_map.items():
+            conn_setting = CONNECTOR_SETTINGS[exchange]
             if global_config_map.get("paper_trade_enabled").value and conn_setting.type == ConnectorType.Exchange:
                 try:
-                    connector = create_paper_trade_market(connector_name, trading_pairs)
+                    connector = create_paper_trade_market(exchange, trading_pairs)
                 except Exception:
                     raise
                 paper_trade_account_balance = global_config_map.get("paper_trade_account_balance").value
@@ -241,15 +242,15 @@ class HummingbotApplication(*commands):
                 if conn_setting.use_ethereum_wallet:
                     ethereum_rpc_url = global_config_map.get("ethereum_rpc_url").value
                     # Todo: Hard coded this execption for now until we figure out how to handle all ethereum connectors.
-                    if connector_name in ["balancer", "uniswap"]:
+                    if exchange in ["balancer", "uniswap"]:
                         private_key = get_eth_wallet_private_key()
                         init_params.update(wallet_private_key=private_key, ethereum_rpc_url=ethereum_rpc_url)
                     else:
                         assert self.wallet is not None
                         init_params.update(wallet=self.wallet, ethereum_rpc_url=ethereum_rpc_url)
-                connector_class = get_connector_class(connector_name)
+                connector_class = get_connector_class(exchange)
                 connector = connector_class(**init_params)
-            self.markets[connector_name] = connector
+            self.markets[exchange] = connector
 
         self.markets_recorder = MarketsRecorder(
             self.trade_fill_db,

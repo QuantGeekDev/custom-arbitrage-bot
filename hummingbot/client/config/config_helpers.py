@@ -208,6 +208,13 @@ def get_connector_class(connector_name: str) -> Callable:
     return getattr(mod, conn_setting.class_name())
 
 
+def get_strategy_class(strategy: str) -> Optional[Callable]:
+    class_name = f"{strategy.title().replace('_', '')}Strategy"
+    mod = __import__(f"hummingbot.strategy.{strategy}.{strategy}",
+                     fromlist=[class_name])
+    return getattr(mod, class_name)
+
+
 def get_strategy_config_map(strategy: str) -> Optional[Dict[str, ConfigVar]]:
     """
     Given the name of a strategy, find and load strategy-specific config map.
@@ -221,19 +228,22 @@ def get_strategy_config_map(strategy: str) -> Optional[Dict[str, ConfigVar]]:
         logging.getLogger().error(e, exc_info=True)
 
 
-def get_strategy_starter_file(strategy: str) -> Callable:
+def get_strategy_starter_file(strategy: str) -> Optional[Callable]:
     """
     Given the name of a strategy, find and load the `start` function in
     `hummingbot/strategy/{STRATEGY_NAME}/start.py` file.
     """
+    strategy_start: Optional[Callable] = None
     if strategy is None:
         return lambda: None
     try:
         strategy_module = __import__(f"hummingbot.strategy.{strategy}.start",
                                      fromlist=[f"hummingbot.strategy.{strategy}"])
-        return getattr(strategy_module, "start")
+        strategy_start = getattr(strategy_module, "start")
     except Exception as e:
         logging.getLogger().error(e, exc_info=True)
+    finally:
+        return strategy_start
 
 
 def load_required_configs(strategy_name) -> OrderedDict:

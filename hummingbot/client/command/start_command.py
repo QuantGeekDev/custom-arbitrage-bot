@@ -5,8 +5,10 @@ import platform
 import threading
 import time
 from typing import (
-    Optional,
     Callable,
+    List,
+    Optional,
+    Tuple,
 )
 from os.path import dirname, join
 from hummingbot.core.clock import (
@@ -15,6 +17,7 @@ from hummingbot.core.clock import (
 )
 from hummingbot import init_logging
 from hummingbot.client.config.config_helpers import (
+    get_strategy_class,
     get_strategy_starter_file,
 )
 from hummingbot.client.settings import (
@@ -102,14 +105,37 @@ class StartCommand:
 
         await self.start_market_making(self.strategy_name, restore)
 
+    def _init_strategy_config(self):
+        if self.strategy_config_map is None:
+            # TODO: Initiate 'create' command
+            self.strategy_config_map = {}
+
+        #  For demo's sake, markets config must be as follows:
+        #  i.e. binance:ALGO-USDT,FIRO-ETH;kucoin:ALGO-USDT,FIRO-ETH
+        exchange_market_list: List[Tuple[str, List[str]]] = [
+            (exchange_markets.split(":")[0], [market.upper()
+                                              for market in exchange_markets.split(":")[1].split(",")])
+            for exchange_markets in self.strategy_config_map.get("markets").value.split(";")]
+
+        self._initialize_markets(exchange_market_list)
+
     async def start_market_making(self,  # type: HummingbotApplication
                                   strategy_name: str,
                                   restore: Optional[bool] = False):
+
         start_strategy: Callable = get_strategy_starter_file(strategy_name)
         if strategy_name in STRATEGIES:
             start_strategy(self)
         else:
-            raise NotImplementedError
+            try:
+                # NOTE: Common parameters of a strategy tend to be the exchange and markets
+                self._init_strategy_config()
+                strategy_class = get_strategy_class(strategy_name)
+                # TODO: Retrieve strategy specific configs
+                # strategy_configs = get_strategy_configs(strategy_name)
+                self.strategy = strategy_class(self.market_trading_pairs_map)
+            except Exception as e:
+                raise e
 
         try:
             config_path: str = self.strategy_file_name
