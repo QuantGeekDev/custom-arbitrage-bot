@@ -162,19 +162,16 @@ class StartCommand:
             self.logger().error(str(e), exc_info=True)
 
     def default_start(self):
-        markets_text = self.strategy_config_map.get("markets").value
-        conn_markets = markets_text.split(",")
-        markets = []
-        for conn_market in conn_markets:
-            conn_market = conn_market.rstrip().lstrip()
-            conn, pair = conn_market.split(":")
-            markets.append(tuple([conn, [pair]]))
-        self._initialize_markets(markets)
+        markets_dict = self.strategy_config_map.get("markets").value
+        markets_list = []
+        for conn, pairs in markets_dict.items():
+            markets_list.append((conn, pairs))
+        self._initialize_markets(markets_list)
         market_infos = []
-        for market in markets:
-            conn, pairs = market
-            base, quote = pairs[0].split("-")
-            market_infos.append(MarketTradingPairTuple(self.markets[conn], pairs[0], base, quote))
+        for conn, pairs in markets_dict.items():
+            for pair in pairs:
+                base, quote = pair.split("-")
+                market_infos.append(MarketTradingPairTuple(self.markets[conn], pair, base, quote))
         strategy_class = get_strategy_class(self.strategy_name)
         parameters = {key: value.value for key, value in self.strategy_config_map.items()
                       if key not in ("strategy", "markets")}
