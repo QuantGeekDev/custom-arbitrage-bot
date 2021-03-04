@@ -85,7 +85,8 @@ async def quick_start(args):
 
     if config_file_name is not None:
         hb.strategy_file_name = config_file_name
-        hb.strategy_name = update_strategy_config_map_from_file(os.path.join(CONF_FILE_PATH, config_file_name))
+        hb.strategy_name, hb.strategy_config_map = update_strategy_config_map_from_file(
+            os.path.join(CONF_FILE_PATH, config_file_name))
 
     # To ensure quickstart runs with the default value of False for kill_switch_enabled if not present
     if not global_config_map.get("kill_switch_enabled"):

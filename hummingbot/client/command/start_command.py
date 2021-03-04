@@ -16,6 +16,7 @@ from hummingbot.core.clock import (
 from hummingbot import init_logging
 from hummingbot.client.config.config_helpers import (
     get_strategy_starter_file,
+    get_strategy_class
 )
 from hummingbot.client.settings import (
     STRATEGIES,
@@ -30,6 +31,7 @@ from hummingbot.client.config.global_config_map import global_config_map
 from hummingbot.core.utils.eth_gas_station_lookup import EthGasStationLookup
 from hummingbot.script.script_iterator import ScriptIterator
 from hummingbot.connector.connector_status import get_connector_status, warning_messages
+from hummingbot.strategy.market_trading_pair_tuple import MarketTradingPairTuple
 if TYPE_CHECKING:
     from hummingbot.client.hummingbot_application import HummingbotApplication
 
@@ -105,11 +107,14 @@ class StartCommand:
     async def start_market_making(self,  # type: HummingbotApplication
                                   strategy_name: str,
                                   restore: Optional[bool] = False):
-        start_strategy: Callable = get_strategy_starter_file(strategy_name)
-        if strategy_name in STRATEGIES:
-            start_strategy(self)
-        else:
-            raise NotImplementedError
+        try:
+            start_strategy: Callable = get_strategy_starter_file(strategy_name)
+            if strategy_name in STRATEGIES:
+                start_strategy(self)
+            else:
+                raise NotImplementedError
+        except ModuleNotFoundError:
+            self.default_start()
 
         try:
             config_path: str = self.strategy_file_name
@@ -155,3 +160,22 @@ class StartCommand:
                 await self.wait_till_ready(self.kill_switch.start)
         except Exception as e:
             self.logger().error(str(e), exc_info=True)
+
+    def default_start(self):
+        markets_text = self.strategy_config_map.get("markets").value
+        conn_markets = markets_text.split(",")
+        markets = []
+        for conn_market in conn_markets:
+            conn_market = conn_market.rstrip().lstrip()
+            conn, pair = conn_market.split(":")
+            markets.append(tuple([conn, [pair]]))
+        self._initialize_markets(markets)
+        market_infos = []
+        for market in markets:
+            conn, pairs = market
+            base, quote = pairs[0].split("-")
+            market_infos.append(MarketTradingPairTuple(self.markets[conn], pairs[0], base, quote))
+        strategy_class = get_strategy_class(self.strategy_name)
+        parameters = {key: value.value for key, value in self.strategy_config_map.items()
+                      if key not in ("strategy", "markets")}
+        self.strategy = strategy_class(market_infos, parameters)

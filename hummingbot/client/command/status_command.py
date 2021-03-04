@@ -13,8 +13,7 @@ from hummingbot.core.network_iterator import NetworkStatus
 from hummingbot.client.config.global_config_map import global_config_map
 from hummingbot.core.utils.ethereum import check_web3
 from hummingbot.client.config.config_helpers import (
-    missing_required_configs,
-    get_strategy_config_map
+    missing_required_configs
 )
 from hummingbot.client.config.security import Security
 from hummingbot.user.user_balances import UserBalances
@@ -109,7 +108,7 @@ class StatusCommand:
 
     def missing_configurations(self) -> List[str]:
         missing_globals = missing_required_configs(global_config_map)
-        missing_configs = missing_required_configs(get_strategy_config_map(self.strategy_name))
+        missing_configs = missing_required_configs(self.strategy_config_map)
         return missing_globals + missing_configs
 
     def status(self,  # type: HummingbotApplication

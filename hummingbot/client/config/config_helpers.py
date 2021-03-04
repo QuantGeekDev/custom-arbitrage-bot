@@ -208,6 +208,14 @@ def get_connector_class(connector_name: str) -> Callable:
     return getattr(mod, conn_setting.class_name())
 
 
+def get_strategy_class(strategy_name: str) -> Callable:
+    class_name = "".join([o.capitalize() for o in strategy_name.split("_")])
+    class_name += "Strategy"
+    mod = __import__(f"hummingbot.strategy.{strategy_name}.{strategy_name}",
+                     fromlist=[class_name])
+    return getattr(mod, class_name)
+
+
 def get_strategy_config_map(strategy: str) -> Optional[Dict[str, ConfigVar]]:
     """
     Given the name of a strategy, find and load strategy-specific config map.
@@ -217,6 +225,8 @@ def get_strategy_config_map(strategy: str) -> Optional[Dict[str, ConfigVar]]:
         strategy_module = __import__(f"hummingbot.strategy.{strategy}.{cm_key}",
                                      fromlist=[f"hummingbot.strategy.{strategy}"])
         return getattr(strategy_module, cm_key)
+    except ModuleNotFoundError:
+        raise
     except Exception as e:
         logging.getLogger().error(e, exc_info=True)
 
@@ -232,6 +242,8 @@ def get_strategy_starter_file(strategy: str) -> Callable:
         strategy_module = __import__(f"hummingbot.strategy.{strategy}.start",
                                      fromlist=[f"hummingbot.strategy.{strategy}"])
         return getattr(strategy_module, "start")
+    except ModuleNotFoundError:
+        raise
     except Exception as e:
         logging.getLogger().error(e, exc_info=True)
 
@@ -243,10 +255,14 @@ def load_required_configs(strategy_name) -> OrderedDict:
     return _merge_dicts(strategy_config_map, global_config_map)
 
 
-def strategy_name_from_file(file_path: str) -> str:
+def yml_data_from_file(file_path: str) -> str:
     with open(file_path) as stream:
         data = yaml_parser.load(stream) or {}
-        strategy = data.get("strategy")
+    return data
+
+
+def strategy_name_from_file(file_path: str) -> str:
+    strategy = yml_data_from_file(file_path).get("strategy")
     return strategy
 
 
@@ -261,12 +277,19 @@ def validate_strategy_file(file_path: str) -> Optional[str]:
     return None
 
 
-def update_strategy_config_map_from_file(yml_path: str) -> str:
+def update_strategy_config_map_from_file(yml_path: str) -> (str, Dict[str, ConfigVar]):
     strategy = strategy_name_from_file(yml_path)
-    config_map = get_strategy_config_map(strategy)
-    template_path = get_strategy_template_path(strategy)
-    load_yml_into_cm(yml_path, template_path, config_map)
-    return strategy
+    try:
+        config_map = get_strategy_config_map(strategy)
+        template_path = get_strategy_template_path(strategy)
+        load_yml_into_cm(yml_path, template_path, config_map)
+    except ModuleNotFoundError:
+        data = yml_data_from_file(yml_path)
+        config_map = {}
+        for key, value in data.items():
+            config_map[key] = ConfigVar(key, prompt=f"Enter {key} value >>> ")
+            config_map[key].value = value
+    return strategy, config_map
 
 
 def load_yml_into_cm(yml_path: str, template_file_path: str, cm: Dict[str, ConfigVar]):

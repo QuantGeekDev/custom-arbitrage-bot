@@ -1,9 +1,9 @@
 from decimal import Decimal
 import logging
+from typing import List, Dict, Any
 from hummingbot.core.clock import Clock
 from hummingbot.logger import HummingbotLogger
 from hummingbot.strategy.strategy_py_base import StrategyPyBase
-from hummingbot.connector.exchange_base import ExchangeBase
 from hummingbot.strategy.market_trading_pair_tuple import MarketTradingPairTuple
 NaN = float("nan")
 s_decimal_zero = Decimal(0)
@@ -21,14 +21,15 @@ class CodejamStrategy(StrategyPyBase):
         return lms_logger
 
     def __init__(self,
-                 exchange: ExchangeBase,
-                 market_info: MarketTradingPairTuple,
+                 market_infos: List[MarketTradingPairTuple],
+                 parameters: Dict[str, Any]
                  ):
         super().__init__()
-        self._exchange = exchange
-        self._market_info = market_info
+        self._market_infos = market_infos
+        self._parameters = parameters
         self._ready_to_trade = False
-        self.add_markets([exchange])
+        self._exchange = market_infos[0].market
+        self.add_markets([self._exchange])
 
     @property
     def active_orders(self):

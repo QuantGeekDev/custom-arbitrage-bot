@@ -22,7 +22,6 @@ from hummingbot.client.errors import InvalidCommandError, ArgumentParserError
 from hummingbot.client.config.global_config_map import global_config_map, using_wallet
 from hummingbot.client.config.config_helpers import (
     get_erc20_token_addresses,
-    get_strategy_config_map,
     get_connector_class,
     get_eth_wallet_private_key,
 )
@@ -100,6 +99,7 @@ class HummingbotApplication(*commands):
         TradingPairFetcher.get_instance()
 
         self._binance_connector = None
+        self.strategy_config_map = {}
 
     @property
     def strategy_file_name(self) -> str:
@@ -111,11 +111,11 @@ class HummingbotApplication(*commands):
         db_name = value.split(".")[0]
         self.trade_fill_db = SQLConnectionManager.get_trade_fills_instance(db_name=db_name)
 
-    @property
-    def strategy_config_map(self):
-        if self.strategy_name is not None:
-            return get_strategy_config_map(self.strategy_name)
-        return None
+    # @property
+    # def strategy_config_map(self):
+    #     if self.strategy_name is not None:
+    #         return get_strategy_config_map(self.strategy_name)
+    #     return None
 
     def _notify(self, msg: str):
         self.app.log(msg)
