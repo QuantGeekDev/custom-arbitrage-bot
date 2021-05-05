@@ -52,7 +52,7 @@ class SillyCommands:
             await self.text_n_wait(".", 1)
         await self.text_n_wait("I'm kidding.", 1.5)
         await self.text_n_wait("Don't call police.", 1.5)
-        await self.text_n_wait("I'm well and busy coding for you all.", 2)
+        await self.text_n_wait("I'm well and busy coding for you all.", 2.5)
         await self.text_n_wait("Get in touch @nullably on Github.", 2.5)
         await self.text_n_wait("Happy trading and don't get rekt.", 2.5)
         jack_1 = open(f"{RESOURCES_PATH}jack_1.txt").readlines()
