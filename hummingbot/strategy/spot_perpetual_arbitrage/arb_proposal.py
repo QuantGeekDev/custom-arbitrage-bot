@@ -84,7 +84,7 @@ class ArbProposal:
 
     async def proposed_spot_deriv_arb(self):
         """
-        Determine if the current situation is contango or backwardation and return a pair of buy and sell prices accordingly.
+        Determine if the current situation is contango or backwardation and update spot_side and derivative_side accordingly.
         """
         await self.update_prices()
         if (sum(self.spot_buy_sell_prices) / 2) > (sum(self.deriv_buy_sell_prices) / 2):  # Backwardation
@@ -94,7 +94,6 @@ class ArbProposal:
             self.derivative_side = ArbProposalSide(self.derivative_market_info, True,
                                                    self.deriv_buy_sell_prices[0],
                                                    self.amount)
-            return (self.spot_side, self.derivative_side)
         else:  # Contango
             self.spot_side = ArbProposalSide(self.spot_market_info, True,
                                              self.spot_buy_sell_prices[0],
@@ -102,7 +101,6 @@ class ArbProposal:
             self.derivative_side = ArbProposalSide(self.derivative_market_info, False,
                                                    self.deriv_buy_sell_prices[1],
                                                    self.amount)
-            return (self.spot_side, self.derivative_side)
 
     def alternate_proposal_sides(self):
         """
