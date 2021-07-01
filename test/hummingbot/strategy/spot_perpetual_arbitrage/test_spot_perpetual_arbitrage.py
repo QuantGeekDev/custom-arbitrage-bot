@@ -94,6 +94,7 @@ class TestSpotPerpetualArbitrage(unittest.TestCase):
             spot_market_slippage_buffer=Decimal("0.01"),
             derivative_market_slippage_buffer=Decimal("0.01")
         )
+        self.current_tick = 1
 
     def simulate_maker_market_trade(
             self, is_buy: bool, quantity: Decimal, price: Decimal, market: Optional[BacktestMarket] = None,
@@ -110,6 +111,11 @@ class TestSpotPerpetualArbitrage(unittest.TestCase):
         )
         order_book.apply_trade(trade_event)
 
+    def _turn_clock(self, no_ticks: int):
+        for i in range(self.current_tick, self.current_tick + no_ticks + 1):
+            self.clock.backtest_til(self.start_timestamp + i)
+            asyncio.get_event_loop().run_until_complete(asyncio.sleep(0.01))
+
     def test_strategy_starts(self):
         """
         Tests if the strategy can start
@@ -123,17 +129,18 @@ class TestSpotPerpetualArbitrage(unittest.TestCase):
             time.time() + 10000,
             Decimal("0.00001")
         )
-        self.clock.backtest_til(self.start_timestamp + 1)
-        asyncio.get_event_loop().run_until_complete(asyncio.sleep(0.01))
-        # self.simulate_maker_market_trade(True, Decimal("100"), Decimal("101"), self.spot_connector)
-        # self.simulate_maker_market_trade(False, Decimal("100"), Decimal("109"), self.perp_connector)
-        self.clock.backtest_til(self.start_timestamp + 2)
-        asyncio.get_event_loop().run_until_complete(asyncio.sleep(0.01))
-        # taker_fill = self.spot_fill_logger.event_log
-        self.clock.backtest_til(self.start_timestamp + 3)
-        asyncio.get_event_loop().run_until_complete(asyncio.sleep(0.01))
-        self.clock.backtest_til(self.start_timestamp + 4)
-        asyncio.get_event_loop().run_until_complete(asyncio.sleep(0.01))
+        self._turn_clock(5)
+        self._turn_clock(5)
+        taker_fill = self.spot_fill_logger.event_log
+        print(taker_fill)
+        # self.clock.backtest_til(self.start_timestamp + 3)
+        # asyncio.get_event_loop().run_until_complete(asyncio.sleep(0.1))
+        # self.clock.backtest_til(self.start_timestamp + 10)
+        # asyncio.get_event_loop().run_until_complete(asyncio.sleep(0.1))
+        # self.clock.backtest_til(self.start_timestamp + 5)
+        # asyncio.get_event_loop().run_until_complete(asyncio.sleep(0.1))
+        # self.clock.backtest_til(self.start_timestamp + 6)
+        # asyncio.get_event_loop().run_until_complete(asyncio.sleep(0.1))
 
     def test_arb_proposal(self):
         proposal = ArbProposal(spot_market_info=self.spot_market_info,
