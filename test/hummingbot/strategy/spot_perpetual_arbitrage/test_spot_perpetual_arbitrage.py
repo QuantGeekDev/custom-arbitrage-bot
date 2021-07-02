@@ -1,6 +1,5 @@
 from os.path import join, realpath
 import sys; sys.path.insert(0, realpath(join(__file__, "../../")))
-
 import logging; logging.basicConfig(level=logging.INFO)
 import pandas as pd
 import unittest
@@ -23,6 +22,8 @@ from hummingbot.core.event.events import (
 from test.mock.mock_perp_connector import MockPerpConnector
 from hummingbot.strategy.spot_perpetual_arbitrage.spot_perpetual_arbitrage import SpotPerpetualArbitrageStrategy
 from hummingbot.strategy.spot_perpetual_arbitrage.arb_proposal import ArbProposal
+from hummingbot.connector.derivative.position import Position, PositionSide
+from hummingbot.core.data_type.order_book_row import OrderBookRow
 
 
 class TestSpotPerpetualArbitrage(unittest.TestCase):
@@ -47,8 +48,8 @@ class TestSpotPerpetualArbitrage(unittest.TestCase):
                                                 price_step_size=2,
                                                 volume_step_size=10)
         self.spot_connector.add_data(self.spot_obook)
-        self.spot_connector.set_balance("HBOT", 500)
-        self.spot_connector.set_balance("ETH", 5000)
+        self.spot_connector.set_balance(self.base_asset, 500)
+        self.spot_connector.set_balance(self.quote_asset, 5000)
         self.spot_connector.set_quantization_param(
             QuantizationParams(
                 self.trading_pair, 6, 6, 6, 6
@@ -60,14 +61,14 @@ class TestSpotPerpetualArbitrage(unittest.TestCase):
         self.perp_connector: MockPerpConnector = MockPerpConnector()
         self.perp_obook: MockOrderBookLoader = MockOrderBookLoader(self.trading_pair, self.base_asset,
                                                                    self.quote_asset)
-        self.perp_obook.set_balanced_order_book(mid_price=110,
+        self.perp_obook.set_balanced_order_book(mid_price=100,
                                                 min_price=1,
                                                 max_price=200,
-                                                price_step_size=2,
+                                                price_step_size=10,
                                                 volume_step_size=10)
         self.perp_connector.add_data(self.perp_obook)
-        self.perp_connector.set_balance("HBOT", 500)
-        self.perp_connector.set_balance("ETH", 5000)
+        self.perp_connector.set_balance(self.base_asset, 500)
+        self.perp_connector.set_balance(self.quote_asset, 5000)
         self.perp_connector.set_quantization_param(
             QuantizationParams(
                 self.trading_pair, 5, 5, 5, 5
@@ -89,10 +90,10 @@ class TestSpotPerpetualArbitrage(unittest.TestCase):
             self.perp_market_info,
             order_amount=Decimal("1"),
             derivative_leverage=5,
-            min_divergence=Decimal("0.01"),
-            min_convergence=Decimal("0.01"),
-            spot_market_slippage_buffer=Decimal("0.01"),
-            derivative_market_slippage_buffer=Decimal("0.01")
+            min_divergence=Decimal("0.05"),
+            min_convergence=Decimal("0.02"),
+            spot_market_slippage_buffer=Decimal("0.0"),
+            derivative_market_slippage_buffer=Decimal("0.0")
         )
         self.current_tick = 1
 
@@ -114,7 +115,7 @@ class TestSpotPerpetualArbitrage(unittest.TestCase):
     def _turn_clock(self, no_ticks: int):
         for i in range(self.current_tick, self.current_tick + no_ticks + 1):
             self.clock.backtest_til(self.start_timestamp + i)
-            asyncio.get_event_loop().run_until_complete(asyncio.sleep(0.01))
+            asyncio.get_event_loop().run_until_complete(asyncio.sleep(0.1))
 
     def test_strategy_starts(self):
         """
@@ -129,18 +130,25 @@ class TestSpotPerpetualArbitrage(unittest.TestCase):
             time.time() + 10000,
             Decimal("0.00001")
         )
+        self._turn_clock(1)
+        # After the first leg of the arbitrage is executed (buy on spot and sell on perpetual), simulate the perpetual
+        # position by manually adding a posution here
+        self.perp_connector._account_positions[self.trading_pair] = Position(
+            self.trading_pair,
+            PositionSide.SHORT,
+            Decimal("0"),
+            Decimal("95"),
+            Decimal("1"),
+            self.perp_connector.get_leverage(self.trading_pair)
+        )
         self._turn_clock(5)
         self._turn_clock(5)
+        # Add bid entry to perpetual order book to trigger the closing of the arb
+        self.perp_obook.order_book.apply_diffs([OrderBookRow(100, 30, 2)], [], 2)
+        self._turn_clock(10)
+
         taker_fill = self.spot_fill_logger.event_log
         print(taker_fill)
-        # self.clock.backtest_til(self.start_timestamp + 3)
-        # asyncio.get_event_loop().run_until_complete(asyncio.sleep(0.1))
-        # self.clock.backtest_til(self.start_timestamp + 10)
-        # asyncio.get_event_loop().run_until_complete(asyncio.sleep(0.1))
-        # self.clock.backtest_til(self.start_timestamp + 5)
-        # asyncio.get_event_loop().run_until_complete(asyncio.sleep(0.1))
-        # self.clock.backtest_til(self.start_timestamp + 6)
-        # asyncio.get_event_loop().run_until_complete(asyncio.sleep(0.1))
 
     def test_arb_proposal(self):
         proposal = ArbProposal(spot_market_info=self.spot_market_info,

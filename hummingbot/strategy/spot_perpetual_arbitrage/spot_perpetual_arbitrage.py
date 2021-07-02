@@ -156,7 +156,6 @@ class SpotPerpetualArbitrageStrategy(StrategyPyBase):
         min_convergence or min_divergence, applies the slippage buffer, applies budget constraint, then finally execute the
         arbitrage.
         """
-        self.logger().info("main")
         execute_arb = False
         funding_msg = ""
         await self.current_proposal.proposed_spot_deriv_arb()
