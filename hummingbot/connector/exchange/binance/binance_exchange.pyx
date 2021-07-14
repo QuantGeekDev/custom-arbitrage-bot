@@ -402,7 +402,7 @@ cdef class BinanceExchange(ExchangeBase):
                 trading_pairs = list(trading_pairs_to_order_map.keys())
                 tasks = [self.query_api(self._binance_client.get_my_trades, symbol=convert_to_exchange_trading_pair(trading_pair))
                          for trading_pair in trading_pairs]
-                self.logger().debug("Polling for order fills of %d trading pairs.", len(tasks))
+                self.logger().debug(f"Polling for order fills of {len(tasks)} trading pairs.")
                 results = await safe_gather(*tasks, return_exceptions=True)
                 for trades, trading_pair in zip(results, trading_pairs):
                     order_map = trading_pairs_to_order_map[trading_pair]
@@ -448,7 +448,7 @@ cdef class BinanceExchange(ExchangeBase):
             trading_pairs = self._order_book_tracker._trading_pairs
             tasks = [self.query_api(self._binance_client.get_my_trades, symbol=convert_to_exchange_trading_pair(trading_pair))
                      for trading_pair in trading_pairs]
-            self.logger().debug("Polling for order fills of %d trading pairs.", len(tasks))
+            self.logger().debug(f"Polling for order fills of {len(tasks)} trading pairs.")
             exchange_history = await safe_gather(*tasks, return_exceptions=True)
             for trades, trading_pair in zip(exchange_history, trading_pairs):
                 if isinstance(trades, Exception):
@@ -494,7 +494,7 @@ cdef class BinanceExchange(ExchangeBase):
             tasks = [self.query_api(self._binance_client.get_order,
                                     symbol=convert_to_exchange_trading_pair(o.trading_pair), origClientOrderId=o.client_order_id)
                      for o in tracked_orders]
-            self.logger().debug("Polling for order status updates of %d orders.", len(tasks))
+            self.logger().debug(f"Polling for order status updates of {len(tasks)} orders.")
             results = await safe_gather(*tasks, return_exceptions=True)
             for order_update, tracked_order in zip(results, tracked_orders):
                 client_order_id = tracked_order.client_order_id
@@ -715,7 +715,6 @@ cdef class BinanceExchange(ExchangeBase):
     async def _status_polling_loop(self):
         while True:
             try:
-                self._poll_notifier = asyncio.Event()
                 await self._poll_notifier.wait()
                 await safe_gather(
                     self._update_balances(),
@@ -731,6 +730,8 @@ cdef class BinanceExchange(ExchangeBase):
                                       app_warning_msg="Could not fetch account updates from Binance. "
                                                       "Check API key and network connection.")
                 await asyncio.sleep(0.5)
+            finally:
+                self._poll_notifier = asyncio.Event()
 
     async def _trading_rules_polling_loop(self):
         while True:
@@ -783,6 +784,11 @@ cdef class BinanceExchange(ExchangeBase):
             self._user_stream_event_listener_task = safe_ensure_future(self._user_stream_event_listener())
 
     def _stop_network(self):
+        # Reset timestamps and _poll_notifier for status_polling_loop
+        self._last_poll_timestamp = 0
+        self._last_timestamp = 0
+        self._poll_notifier = asyncio.Event()
+
         self._order_book_tracker.stop()
         if self._status_polling_task is not None:
             self._status_polling_task.cancel()
