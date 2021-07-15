@@ -1,4 +1,3 @@
-from abc import abstractmethod
 from collections import deque
 from typing import (
     Deque,
@@ -38,6 +37,5 @@ class APIThrottlerBase:
 
         self._task_logs: Deque[TaskLog] = deque()
 
-    @abstractmethod
     def execute_task(self):
         raise NotImplementedError
