@@ -40,14 +40,14 @@ WeightedTask = Tuple[Timestamp_s, RequestWeight]
 TaskLog = Union[FixedRateTask, PerMethodTask, WeightedTask]
 
 
-class APIThrottler:
+class APIRequestThrottler:
     def __init__(self,
                  rate_limit: RateLimit,
                  rate_limit_type: RateLimitType = RateLimitType.FIXED,
                  period_safety_margin: Seconds = 0.1,
                  retry_interval: Seconds = 0.1):
         """
-        The APIThrottler class handles the throttling of API requests through the usage of asynchronous context
+        The APIRequestThrottler class handles the throttling of API requests through the usage of asynchronous context
         managers
         """
 
@@ -58,11 +58,10 @@ class APIThrottler:
 
         self._task_logs: Deque[TaskLog] = deque()
 
-    @property
-    def rate_limit_type(self) -> RateLimitType:
-        return self._rate_limit_type
-
-    def weighted_task(self, path_url):
+    # TODO: Weighted Task
+    def weighted_task(self,
+                      path_url,
+                      request_weight):
         return ThrottlerContextManager(
             task_logs=self._task_logs,
             rate_limit=self._rate_limit[path_url][0],
@@ -71,19 +70,21 @@ class APIThrottler:
             request_weight=self._rate_limit[path_url][1],
         )
 
+    # TODO: Fixed Rate Task
     def fixed_rate_task(self):
         return ThrottlerContextManager(
             task_logs=self._task_logs,
             rate_limit=self._rate_limit[0],
-            rate_limit_type=self._rate_limit_type,
             time_interval=self._rate_limit[1]
         )
 
-    def per_method_task(self, path_url):
+    def per_method_task(self,
+                        path_url,
+                        ):
         return ThrottlerContextManager(
             task_logs=self._task_logs,
-            rate_limit=self._rate_limit[path_url][0],
             rate_limit_type=self._rate_limit_type,
+            rate_limit=self._rate_limit[path_url][0],
             request_path=path_url,
             time_interval=self._rate_limit[path_url][1]
         )
@@ -153,7 +154,6 @@ class ThrottlerContextManager:
             elif self._rate_limit_type == RateLimitType.WEIGHTED:
                 current_capacity: int = self._rate_limit - sum(weight for (_, weight) in self._task_logs)
 
-            # Request Weight for non-weighted requests defaults to 1
             if current_capacity - self._request_weight > 0:
                 break
             await asyncio.sleep(self._retry_interval)
