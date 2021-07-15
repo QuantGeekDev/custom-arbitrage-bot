@@ -1,7 +1,6 @@
 import asyncio
 import time
 
-from abc import abstractmethod
 from typing import (
     Deque,
 )
@@ -51,7 +50,6 @@ class APIRequestContextBase:
             else:
                 break
 
-    @abstractmethod
     def within_capacity(self) -> bool:
         raise NotImplementedError
 
