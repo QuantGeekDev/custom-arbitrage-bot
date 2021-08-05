@@ -73,7 +73,9 @@ class NdaxOrderBookTracker(OrderBookTracker):
                     message = await message_queue.get()
 
                 if message.type is OrderBookMessageType.DIFF:
-                    bids, asks = message.bids, message.asks
+                    bids = [entry for entry in message.bids if entry.update_id >= last_message_timestamp]
+                    asks = [entry for entry in message.asks if entry.update_id >= last_message_timestamp]
+
                     order_book.apply_diffs(bids, asks, message.timestamp)
                     past_diffs_window.append(message)
                     while len(past_diffs_window) > self.PAST_DIFF_WINDOW_SIZE:

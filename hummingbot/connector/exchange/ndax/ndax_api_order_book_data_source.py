@@ -9,6 +9,7 @@ from typing import (
     Dict,
     List,
     Optional,
+    OrderedDict,
 )
 
 from hummingbot.connector.exchange.ndax import ndax_constants as CONSTANTS, ndax_utils
@@ -148,8 +149,7 @@ class NdaxAPIOrderBookDataSource(OrderBookTrackerDataSource):
 
     async def get_new_order_book(self, trading_pair: str) -> OrderBook:
         snapshot: Dict[str, Any] = await self.get_order_book_data(trading_pair, self._domain)
-        snapshot_timestamp: int = int(time.time() * 1e3)
-
+        snapshot_timestamp: int = snapshot["timestamp"]
         snapshot_msg: OrderBookMessage = NdaxOrderBook.snapshot_message_from_exchange(
             msg=snapshot,
             timestamp=snapshot_timestamp,
@@ -195,7 +195,7 @@ class NdaxAPIOrderBookDataSource(OrderBookTrackerDataSource):
                         "trading_pair": trading_pair,
                         "instrument_id": self._trading_pair_id_map.get(trading_pair, None)
                     }
-                    snapshot_timestamp: int = int(time.time() * 1e3)
+                    snapshot_timestamp: int = snapshot["timestamp"]
                     snapshot_message: OrderBookMessage = NdaxOrderBook.snapshot_message_from_exchange(
                         msg=snapshot,
                         timestamp=snapshot_timestamp,
@@ -223,6 +223,7 @@ class NdaxAPIOrderBookDataSource(OrderBookTrackerDataSource):
                     payload = {
                         "OMSId": 1,
                         "Symbol": convert_to_exchange_trading_pair(trading_pair),
+                        "Depth": 1
                     }
                     await ws_adapter.send_request(endpoint_name=CONSTANTS.WS_ORDER_BOOK_CHANNEL,
                                                   payload=payload)
@@ -233,26 +234,34 @@ class NdaxAPIOrderBookDataSource(OrderBookTrackerDataSource):
                     if msg_event == CONSTANTS.WS_ORDER_BOOK_L2_UPDATE_EVENT:
                         msg_data: List[NdaxOrderBookEntry] = [NdaxOrderBookEntry(*entry)
                                                               for entry in payload]
-                        msg_timestamp: int = max([e.actionDateTime for e in msg_data])
-                        msg_product_code: int = msg_data[0].productPairCode
 
-                        content = {"data": msg_data}
-                        msg_trading_pair: Optional[str] = None
+                        entries_by_time: OrderedDict[int, List[NdaxOrderBookEntry]] = OrderedDict()
 
-                        for trading_pair, instrument_id in self._trading_pair_id_map.items():
-                            if msg_product_code == instrument_id:
-                                msg_trading_pair = trading_pair
-                                break
+                        for entry in msg_data:
+                            if entry.actionDateTime not in entries_by_time:
+                                entries_by_time[entry.actionDateTime] = []
+                            entries_by_time[entry.actionDateTime].append(entry)
 
-                        if msg_trading_pair:
-                            metadata = {
-                                "trading_pair": msg_trading_pair,
-                                "instrument_id": msg_product_code,
-                            }
-                            diff_msg: OrderBookMessage = NdaxOrderBook.diff_message_from_exchange(msg=content,
-                                                                                                  timestamp=msg_timestamp,
-                                                                                                  metadata=metadata)
-                            output.put_nowait(diff_msg)
+                        for ts, entries in entries_by_time.items():
+                            msg_product_code: int = entries[0].productPairCode
+
+                            content = {"data": entries}
+                            msg_trading_pair: Optional[str] = None
+
+                            for trading_pair, instrument_id in self._trading_pair_id_map.items():
+                                if msg_product_code == instrument_id:
+                                    msg_trading_pair = trading_pair
+                                    break
+
+                            if msg_trading_pair:
+                                metadata = {
+                                    "trading_pair": msg_trading_pair,
+                                    "instrument_id": msg_product_code,
+                                }
+                                diff_msg: OrderBookMessage = NdaxOrderBook.diff_message_from_exchange(msg=content,
+                                                                                                      timestamp=ts,
+                                                                                                      metadata=metadata)
+                                output.put_nowait(diff_msg)
                     else:
                         self.logger().debug(f"Unrecognized order event. Message: {payload}")
 
