@@ -188,6 +188,7 @@ class NdaxAPIOrderBookDataSource(OrderBookTrackerDataSource):
             await self.init_trading_pair_ids(self._domain)
         while True:
             try:
+                await asyncio.sleep(self._ORDER_BOOK_SNAPSHOT_DELAY)
                 for trading_pair in self._trading_pairs:
                     snapshot: Dict[str: Any] = await self.get_order_book_data(trading_pair, domain=self._domain)
                     metadata = {
@@ -201,8 +202,6 @@ class NdaxAPIOrderBookDataSource(OrderBookTrackerDataSource):
                         metadata=metadata
                     )
                     output.put_nowait(snapshot_message)
-
-                await asyncio.sleep(self._ORDER_BOOK_SNAPSHOT_DELAY)
             except asyncio.CancelledError:
                 raise
             except Exception:
@@ -224,7 +223,6 @@ class NdaxAPIOrderBookDataSource(OrderBookTrackerDataSource):
                     payload = {
                         "OMSId": 1,
                         "Symbol": convert_to_exchange_trading_pair(trading_pair),
-                        "Depth": 99999
                     }
                     await ws_adapter.send_request(endpoint_name=CONSTANTS.WS_ORDER_BOOK_CHANNEL,
                                                   payload=payload)
@@ -232,7 +230,7 @@ class NdaxAPIOrderBookDataSource(OrderBookTrackerDataSource):
                     payload: List[List[Any]] = NdaxWebSocketAdaptor.payload_from_raw_message(raw_msg)
                     msg_event: str = NdaxWebSocketAdaptor.endpoint_from_raw_message(raw_msg)
 
-                    if msg_event in [CONSTANTS.WS_ORDER_BOOK_CHANNEL, CONSTANTS.WS_ORDER_BOOK_L2_UPDATE_EVENT]:
+                    if msg_event == CONSTANTS.WS_ORDER_BOOK_L2_UPDATE_EVENT:
                         msg_data: List[NdaxOrderBookEntry] = [NdaxOrderBookEntry(*entry)
                                                               for entry in payload]
                         msg_timestamp: int = max([e.actionDateTime for e in msg_data])
@@ -247,22 +245,16 @@ class NdaxAPIOrderBookDataSource(OrderBookTrackerDataSource):
                                 break
 
                         if msg_trading_pair:
-
                             metadata = {
                                 "trading_pair": msg_trading_pair,
                                 "instrument_id": msg_product_code,
                             }
-
-                            if msg_event == CONSTANTS.WS_ORDER_BOOK_CHANNEL:
-                                snapshot_msg: OrderBookMessage = NdaxOrderBook.snapshot_message_from_exchange(msg=content,
-                                                                                                              timestamp=msg_timestamp,
-                                                                                                              metadata=metadata)
-                                output.put_nowait(snapshot_msg)
-                            elif msg_event == CONSTANTS.WS_ORDER_BOOK_L2_UPDATE_EVENT:
-                                diff_msg: OrderBookMessage = NdaxOrderBook.diff_message_from_exchange(msg=content,
-                                                                                                      timestamp=msg_timestamp,
-                                                                                                      metadata=metadata)
-                                output.put_nowait(diff_msg)
+                            diff_msg: OrderBookMessage = NdaxOrderBook.diff_message_from_exchange(msg=content,
+                                                                                                  timestamp=msg_timestamp,
+                                                                                                  metadata=metadata)
+                            output.put_nowait(diff_msg)
+                    else:
+                        self.logger().debug(f"Unrecognized order event. Message: {payload}")
 
             except asyncio.CancelledError:
                 raise

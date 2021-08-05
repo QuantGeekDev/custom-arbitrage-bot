@@ -2,7 +2,6 @@
 import asyncio
 import bisect
 import logging
-import time
 
 from collections import defaultdict, deque
 from typing import Optional, Dict, List, Deque
@@ -59,7 +58,8 @@ class NdaxOrderBookTracker(OrderBookTracker):
         message_queue: asyncio.Queue = self._tracking_message_queues[trading_pair]
         order_book: NdaxOrderBook = self._order_books[trading_pair]
 
-        last_message_timestamp: float = time.time()
+        last_message_timestamp: float = order_book.snapshot_uid
+
         diff_messages_accepted: int = 0
 
         while True:
@@ -74,28 +74,32 @@ class NdaxOrderBookTracker(OrderBookTracker):
 
                 if message.type is OrderBookMessageType.DIFF:
                     bids, asks = message.bids, message.asks
-                    order_book.apply_diffs(bids, asks, message.update_id)
+                    order_book.apply_diffs(bids, asks, message.timestamp)
                     past_diffs_window.append(message)
                     while len(past_diffs_window) > self.PAST_DIFF_WINDOW_SIZE:
                         past_diffs_window.popleft()
                     diff_messages_accepted += 1
 
                     # Output some statistics periodically.
-                    now: float = time.time()
-                    if int(now / 60.0) > int(last_message_timestamp / 60.0):
+                    msg_timestamp = message.timestamp
+                    if int(msg_timestamp / 60.0) > int(last_message_timestamp / 60.0):
                         self.logger().debug(f"Processed {diff_messages_accepted} order book diffs for {trading_pair}.")
                         diff_messages_accepted = 0
-                    last_message_timestamp = now
+                    last_message_timestamp = msg_timestamp
                 elif message.type is OrderBookMessageType.SNAPSHOT:
-                    past_diffs: List[NdaxOrderBookMessage] = list(past_diffs_window)
-                    # only replay diffs later than snapshot, first update active order with snapshot then replay diffs
-                    replay_position = bisect.bisect_right(past_diffs, message)
-                    replay_diffs = past_diffs[replay_position:]
+
                     s_bids, s_asks = message.bids, message.asks
                     order_book.apply_snapshot(s_bids, s_asks, message.update_id)
+                    last_message_timestamp = msg_timestamp
+
+                    # only replay diffs later than snapshot, first update active order with snapshot then replay diffs
+                    past_diffs: List[NdaxOrderBookMessage] = list(past_diffs_window)
+                    replay_position = bisect.bisect_right(past_diffs, message)
+                    replay_diffs = past_diffs[replay_position:]
                     for diff_message in replay_diffs:
                         d_bids, d_asks = diff_message.bids, diff_message.asks
                         order_book.apply_diffs(d_bids, d_asks, diff_message.update_id)
+                        last_message_timestamp = diff_message.timestamp
 
                     self.logger().debug(f"Processed order book snapshot for {trading_pair}.")
             except asyncio.CancelledError:

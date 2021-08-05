@@ -43,11 +43,13 @@ class NdaxOrderBookMessage(OrderBookMessage):
     @property
     def update_id(self) -> int:
         if self.type in [OrderBookMessageType.DIFF, OrderBookMessageType.SNAPSHOT]:
-            entry: NdaxOrderBookEntry = self.content["data"][0]
-            return int(entry.actionDateTime)
+            entries: List[NdaxOrderBookEntry] = self.content["data"]
+            return max([entry.actionDateTime
+                        for entry in entries])
         elif self.type == OrderBookMessageType.TRADE:
-            entry: NdaxTradeEntry = self.content["data"][0]
-            return int(entry.tradeTime)
+            entries: List[NdaxTradeEntry] = self.content["data"]
+            return max([entry.tradeTime
+                        for entry in entries])
 
     @property
     def trade_id(self) -> int:
@@ -61,17 +63,21 @@ class NdaxOrderBookMessage(OrderBookMessage):
     @property
     def asks(self) -> List[OrderBookRow]:
         entries: List[NdaxOrderBookEntry] = self.content["data"]
-        return [self._order_book_row_for_entry(entry) for entry in entries if entry.side == self._SELL_SIDE]
+        asks: List[NdaxOrderBookEntry] = sorted([entry for entry in entries if entry.side == self._SELL_SIDE],
+                                                key=lambda entry: [entry.actionDateTime, entry.mdUpdateId])
+        return [self._order_book_row_for_entry(entry) for entry in asks]
 
     @property
     def bids(self) -> List[OrderBookRow]:
         entries: List[NdaxOrderBookEntry] = self.content["data"]
-        return [self._order_book_row_for_entry(entry) for entry in entries if entry.side == self._BUY_SIDE]
+        bids: List[NdaxOrderBookEntry] = sorted([entry for entry in entries if entry.side == self._BUY_SIDE],
+                                                key=lambda entry: [entry.actionDateTime, entry.mdUpdateId])
+        return [self._order_book_row_for_entry(entry) for entry in bids]
 
     def _order_book_row_for_entry(self, entry: NdaxOrderBookEntry) -> OrderBookRow:
         price = float(entry.price)
         amount = float(entry.quantity) if entry.actionType != self._DELETE_ACTION_TYPE else 0.0
-        update_id = entry.mdUpdateId
+        update_id = entry.actionDateTime
         return OrderBookRow(price, amount, update_id)
 
     def __eq__(self, other) -> bool:
