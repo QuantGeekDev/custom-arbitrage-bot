@@ -287,8 +287,8 @@ cdef class BinanceExchange(ExchangeBase):
                 raise
             except Exception:
                 self.logger().network("Error fetching Binance trade fees.", exc_info=True,
-                                      app_warning_msg=f"Could not fetch Binance trading fees. "
-                                                      f"Check network connection.")
+                                      app_warning_msg="Could not fetch Binance trading fees. "
+                                                      "Check network connection.")
                 raise
 
     cdef object c_get_fee(self,
@@ -810,6 +810,9 @@ cdef class BinanceExchange(ExchangeBase):
         except asyncio.CancelledError:
             raise
         except Exception:
+            self.logger().network("Error on Binance ping-check.", exc_info=True,
+                                  app_warning_msg="Could not ping Binance server. "
+                                                  "Check network connection.")
             return NetworkStatus.NOT_CONNECTED
         return NetworkStatus.CONNECTED
 

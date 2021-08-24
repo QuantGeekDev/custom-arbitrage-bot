@@ -699,6 +699,10 @@ cdef class PureMarketMakingStrategy(StrategyBase):
 
                 if not self._take_if_crossed:
                     self.c_filter_out_takers(proposal)
+
+            self.logger().debug(self._sb_order_tracker._tracked_limit_orders.keys())
+            self.logger().debug(self.market_info.market._exchange_order_ids.values())
+
             self.c_cancel_active_orders_on_max_age_limit()
             self.c_cancel_active_orders(proposal)
             self.c_cancel_hanging_orders()
@@ -974,7 +978,6 @@ cdef class PureMarketMakingStrategy(StrategyBase):
 
         if market_info is not None:
             limit_order_record = self._sb_order_tracker.c_get_shadow_limit_order(order_id)
-            order_fill_record = (limit_order_record, order_filled_event)
 
             if order_filled_event.trade_type is TradeType.BUY:
                 if self._logging_options & self.OPTION_LOG_MAKER_ORDER_FILLED:
