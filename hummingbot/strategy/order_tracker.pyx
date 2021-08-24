@@ -1,3 +1,4 @@
+import logging
 from collections import (
     deque,
     OrderedDict
@@ -17,6 +18,7 @@ from hummingbot.connector.connector_base import ConnectorBase
 from .market_trading_pair_tuple import MarketTradingPairTuple
 
 NaN = float("nan")
+order_tracker_logger = None
 
 cdef class OrderTracker(TimeIterator):
     # ETH confirmation requirement of Binance has shortened to 12 blocks as of 7/15/2019.
@@ -35,6 +37,13 @@ cdef class OrderTracker(TimeIterator):
         self._shadow_gc_requests = deque()
         self._in_flight_pending_created = set()
         self._in_flight_cancels = OrderedDict()
+
+    @classmethod
+    def logger(cls):
+        global order_tracker_logger
+        if order_tracker_logger is None:
+            order_tracker_logger = logging.getLogger(__name__)
+        return order_tracker_logger
 
     @property
     def active_limit_orders(self) -> List[Tuple[ConnectorBase, LimitOrder]]:
@@ -233,6 +242,7 @@ cdef class OrderTracker(TimeIterator):
         return self.c_start_tracking_limit_order(market_pair, order_id, is_buy, price, quantity)
 
     cdef c_stop_tracking_limit_order(self, object market_pair, str order_id):
+        self.logger().debug(f"Stop tracking {order_id}")
         if market_pair in self._tracked_limit_orders and order_id in self._tracked_limit_orders[market_pair]:
             del self._tracked_limit_orders[market_pair][order_id]
             if len(self._tracked_limit_orders[market_pair]) < 1:
@@ -252,6 +262,7 @@ cdef class OrderTracker(TimeIterator):
         return self.c_stop_tracking_limit_order(market_pair, order_id)
 
     cdef c_start_tracking_market_order(self, object market_pair, str order_id, bint is_buy, object quantity):
+        self.logger().debug(f"Start tracking {order_id}")
         if market_pair not in self._tracked_market_orders:
             self._tracked_market_orders[market_pair] = {}
         self._tracked_market_orders[market_pair][order_id] = MarketOrder(

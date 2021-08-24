@@ -700,7 +700,9 @@ cdef class PureMarketMakingStrategy(StrategyBase):
                 if not self._take_if_crossed:
                     self.c_filter_out_takers(proposal)
 
-            self.logger().debug(self._sb_order_tracker._tracked_limit_orders.keys())
+            self.logger().debug((self.active_orders))
+            if self._market_info in self._sb_order_tracker._tracked_limit_orders:
+                self.logger().debug(self._sb_order_tracker._tracked_limit_orders[self._market_info].keys())
             self.logger().debug(self.market_info.market._exchange_order_ids.values())
 
             self.c_cancel_active_orders_on_max_age_limit()
