@@ -24,6 +24,7 @@ from hummingbot.logger import HummingbotLogger
 from hummingbot.strategy.conditional_execution_state import ConditionalExecutionState, RunAlwaysExecutionState
 from hummingbot.strategy.market_trading_pair_tuple import MarketTradingPairTuple
 from hummingbot.strategy.strategy_py_base import StrategyPyBase
+from hummingbot.core.utils import map_df_to_str
 
 twap_logger = None
 
@@ -165,7 +166,7 @@ class TwapTradeStrategy(StrategyPyBase):
 
             # See if there're any open orders.
             if len(active_orders) > 0:
-                df = LimitOrder.to_pandas(active_orders)
+                df = map_df_to_str(active_orders)
                 df_lines = str(df).split("\n")
                 lines.extend(["", "  Active orders:"] +
                              ["    " + line for line in df_lines])
