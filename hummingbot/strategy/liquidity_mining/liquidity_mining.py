@@ -513,6 +513,12 @@ class LiquidityMiningStrategy(StrategyPyBase):
                 self.notify_hb_app_with_timestamp(msg)
                 self._buy_budgets[market_info.trading_pair] -= (event.amount * event.price)
                 self._sell_budgets[market_info.trading_pair] += event.amount
+
+                self.sell_with_specific_market(market_info,
+                                               event.amount,
+                                               order_type=OrderType.LIMIT,
+                                               price=market_info.get_mid_price() * Decimal("0.9")
+                                               )
             else:
                 msg = f"({market_info.trading_pair}) Maker SELL order (price: {event.price}) of {event.amount} " \
                       f"{market_info.base_asset} is filled."
