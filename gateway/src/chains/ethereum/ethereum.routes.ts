@@ -186,7 +186,12 @@ export namespace EthereumRoutes {
         const tokens = getTokenSymbolsToTokens(req.body.tokenSymbols);
 
         const balances: Record<string, string> = {};
-        balances.ETH = tokenValueToString(await ethereum.getEthBalance(wallet));
+        const nativeToken = tokenValueToString(
+          await ethereum.getEthBalance(wallet)
+        );
+        if (req.baseUrl.search('eth') === 1) balances.ETH = nativeToken;
+        else balances.AVAX = nativeToken;
+
         await Promise.all(
           Object.keys(tokens).map(async (symbol) => {
             if (tokens[symbol] !== undefined) {
