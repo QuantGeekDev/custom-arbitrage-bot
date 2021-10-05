@@ -21,15 +21,30 @@ export class Ethereum extends EthereumBase {
 
   private constructor() {
     let config;
-    if (ConfigManager.config.ETHEREUM_CHAIN === 'mainnet') {
-      config = EthereumConfig.config.mainnet;
-    } else {
-      config = EthereumConfig.config.kovan;
+    switch (ConfigManager.config.ETHEREUM_CHAIN) {
+      case 'mainnet':
+        config = EthereumConfig.config.mainnet;
+        break;
+      case 'kovan':
+        config = EthereumConfig.config.kovan;
+        break;
+      case 'fuji':
+        config = EthereumConfig.config.fuji;
+        break;
+      case 'avalanche':
+        config = EthereumConfig.config.avalanche;
+        break;
+      default:
+        throw new Error('ETHEREUM_CHAIN not valid');
     }
+
+    config.rpcUrl = config.requiresApiKey
+      ? config.rpcUrl + ConfigManager.config.INFURA_KEY
+      : config.rpcUrl;
 
     super(
       config.chainId,
-      config.rpcUrl + ConfigManager.config.INFURA_KEY,
+      config.rpcUrl,
       config.tokenListSource,
       config.tokenListType,
       ConfigManager.config.ETH_MANUAL_GAS_PRICE
