@@ -81,6 +81,7 @@ class LiquidityMiningStrategy(StrategyPyBase):
         self._volatility = {market: s_decimal_nan for market in self._market_infos}
         self._last_vol_reported = 0.
         self._hb_app_notification = hb_app_notification
+        self._market_sell_order_ids: List[str] = []
 
         self.add_markets([exchange])
 
@@ -90,7 +91,7 @@ class LiquidityMiningStrategy(StrategyPyBase):
         List active orders (they have been sent to the market and have not been cancelled yet)
         """
         limit_orders = self.order_tracker.active_limit_orders
-        return [o[1] for o in limit_orders]
+        return [o[1] for o in limit_orders if o[1].client_order_id not in self._market_sell_order_ids]
 
     @property
     def sell_budgets(self):
@@ -514,11 +515,12 @@ class LiquidityMiningStrategy(StrategyPyBase):
                 self._buy_budgets[market_info.trading_pair] -= (event.amount * event.price)
                 self._sell_budgets[market_info.trading_pair] += event.amount
 
-                self.sell_with_specific_market(market_info,
-                                               event.amount,
-                                               order_type=OrderType.LIMIT,
-                                               price=market_info.get_mid_price() * Decimal("0.9")
-                                               )
+                order_id = self.sell_with_specific_market(market_info,
+                                                          event.amount,
+                                                          order_type=OrderType.LIMIT,
+                                                          price=market_info.get_mid_price() * Decimal("0.9")
+                                                          )
+                self._market_sell_order_ids.append(order_id)
             else:
                 msg = f"({market_info.trading_pair}) Maker SELL order (price: {event.price}) of {event.amount} " \
                       f"{market_info.base_asset} is filled."
