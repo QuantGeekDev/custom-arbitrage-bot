@@ -29,17 +29,29 @@ export class Uniswap {
 
   private constructor() {
     let config;
-    if (ConfigManager.config.ETHEREUM_CHAIN === 'mainnet') {
-      config = UniswapConfig.config.mainnet;
-    } else {
-      config = UniswapConfig.config.kovan;
-    }
-
-    this._uniswapRouter = config.uniswapV2RouterAddress;
-    if (ConfigManager.config.ETHEREUM_CHAIN === 'mainnet') {
-      this.chainId = EthereumConfig.config.mainnet.chainId;
-    } else {
-      this.chainId = EthereumConfig.config.kovan.chainId;
+    switch (ConfigManager.config.ETHEREUM_CHAIN) {
+      case 'mainnet':
+        config = UniswapConfig.config.mainnet;
+        this._uniswapRouter = config.uniswapV2RouterAddress;
+        this.chainId = EthereumConfig.config.mainnet.chainId;
+        break;
+      case 'kovan':
+        config = UniswapConfig.config.kovan;
+        this._uniswapRouter = config.uniswapV2RouterAddress;
+        this.chainId = EthereumConfig.config.kovan.chainId;
+        break;
+      case 'fuji':
+        config = UniswapConfig.config.fuji;
+        this._uniswapRouter = config.routerAddress;
+        this.chainId = EthereumConfig.config.fuji.chainId;
+        break;
+      case 'avalanche':
+        config = UniswapConfig.config.avalanche;
+        this._uniswapRouter = config.routerAddress;
+        this.chainId = EthereumConfig.config.avalanche.chainId;
+        break;
+      default:
+        throw new Error('ETHEREUM_CHAIN not valid');
     }
   }
 

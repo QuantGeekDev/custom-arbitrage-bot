@@ -90,6 +90,12 @@ export namespace EthereumRoutes {
       } else {
         spender = UniswapConfig.config.kovan.uniswapV2RouterAddress;
       }
+    } else if (reqSpender === 'pangolin') {
+      if (ConfigManager.config.ETHEREUM_CHAIN === 'avalanche') {
+        spender = UniswapConfig.config.avalanche.routerAddress;
+      } else {
+        spender = UniswapConfig.config.fuji.routerAddress;
+      }
     } else {
       spender = reqSpender;
     }
