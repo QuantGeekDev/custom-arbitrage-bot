@@ -40,16 +40,6 @@ export class Uniswap {
         this._uniswapRouter = config.uniswapV2RouterAddress;
         this.chainId = EthereumConfig.config.kovan.chainId;
         break;
-      case 'fuji':
-        config = UniswapConfig.config.fuji;
-        this._uniswapRouter = config.routerAddress;
-        this.chainId = EthereumConfig.config.fuji.chainId;
-        break;
-      case 'avalanche':
-        config = UniswapConfig.config.avalanche;
-        this._uniswapRouter = config.routerAddress;
-        this.chainId = EthereumConfig.config.avalanche.chainId;
-        break;
       default:
         throw new Error('ETHEREUM_CHAIN not valid');
     }

@@ -202,7 +202,7 @@ export namespace AvalancheRoutes {
           nonce
         );
         return res.status(200).json({
-          network: ConfigManager.config.ETHEREUM_CHAIN,
+          network: ConfigManager.config.AVALANCHE_CHAIN,
           ...result,
         });
       }
@@ -218,7 +218,7 @@ export namespace AvalancheRoutes {
       ) => {
         const result = await poll(avalanche, req.body.txHash);
         return res.status(200).json({
-          network: ConfigManager.config.ETHEREUM_CHAIN,
+          network: ConfigManager.config.AVALANCHE_CHAIN,
           ...result,
         });
       }

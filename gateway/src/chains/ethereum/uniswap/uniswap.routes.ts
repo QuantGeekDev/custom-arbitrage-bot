@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { Ethereum } from '../ethereum';
 import { Uniswap, ExpectedTrade } from './uniswap';
 import { ConfigManager } from '../../../services/config-manager';
@@ -10,17 +10,21 @@ import {
   stringWithDecimalToBigNumber,
 } from '../../../services/base';
 import { Trade } from '@uniswap/sdk';
-import { verifyEthereumIsAvailable } from '../ethereum-middlewares';
-import { verifyUniswapIsAvailable } from './uniswap-middlewares';
-
 export namespace UniswapRoutes {
   export const router = Router();
   export const uniswap = Uniswap.getInstance();
   export const ethereum = Ethereum.getInstance();
 
   router.use(
-    asyncHandler(verifyEthereumIsAvailable),
-    asyncHandler(verifyUniswapIsAvailable)
+    asyncHandler(async (_req: Request, _res: Response, next: NextFunction) => {
+      if (!ethereum.ready()) {
+        await ethereum.init();
+      }
+      if (!uniswap.ready()) {
+        await uniswap.init();
+      }
+      return next();
+    })
   );
 
   router.get('/', async (_req: Request, res: Response) => {

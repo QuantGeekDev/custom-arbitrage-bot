@@ -76,7 +76,7 @@ app.post(
       updateLoggerToStdout();
 
       logger.info('Reloading Ethereum routes.');
-      EthereumRoutes.reload();
+      // EthereumRoutes.reload();
 
       logger.info('Restarting gateway.');
       await stopGateway();

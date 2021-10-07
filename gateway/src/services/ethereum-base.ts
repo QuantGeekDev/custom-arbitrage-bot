@@ -176,13 +176,18 @@ export class EthereumBase {
     wallet: Wallet,
     spender: string,
     tokenAddress: string,
-    amount: BigNumber
+    amount: BigNumber,
+    nonce?: number
   ): Promise<Transaction> {
     // instantiate a contract and pass in wallet, which act on behalf of that signer
     const contract = new Contract(tokenAddress, abi.ERC20Abi, wallet);
+    if (!nonce) {
+      nonce = await this.nonceManager.getNonce(wallet.address);
+    }
     return contract.approve(spender, amount, {
       gasPrice: this.gasPriceConstant * 1e9,
       gasLimit: 100000,
+      nonce: nonce,
     });
   }
 
