@@ -1,19 +1,16 @@
-import { Ethereum } from './ethereum';
 import ethers, { constants, Wallet, utils, BigNumber } from 'ethers';
-import { ConfigManager } from '../../services/config-manager';
 import { latency, bigNumberWithDecimalToStr } from '../../services/base';
 import { GatewayError } from '../../services/error-handler';
-
-export const ethereum = Ethereum.getInstance();
+import { EthereumBase, Token } from '../../services/ethereum-base';
 
 export async function approve(
+  ethereum: EthereumBase,
   spender: string,
   privateKey: string,
   token: string,
   amount?: BigNumber | string,
   nonce?: number
 ) {
-  if (!ethereum.ready()) await ethereum.init();
   const initTime = Date.now();
   let wallet: Wallet;
   try {
@@ -30,9 +27,8 @@ export async function approve(
     : constants.MaxUint256;
 
   // call approve function
-  let approval;
 
-  approval = await ethereum.approveERC20(
+  const approval = await ethereum.approveERC20(
     wallet,
     spender,
     fullToken.address,
@@ -41,7 +37,6 @@ export async function approve(
   );
 
   return {
-    network: ConfigManager.config.ETHEREUM_CHAIN,
     timestamp: initTime,
     latency: latency(initTime, Date.now()),
     tokenAddress: fullToken.address,
@@ -78,7 +73,7 @@ const toEthereumTransactionReceipt = (
   return null;
 };
 
-export async function poll(txHash: string) {
+export async function poll(ethereum: EthereumBase, txHash: string) {
   const initTime = Date.now();
   const receipt = await ethereum.getTransactionReceipt(txHash);
   const confirmed = !!receipt && !!receipt.blockNumber;
@@ -92,11 +87,29 @@ export async function poll(txHash: string) {
   }
 
   return {
-    network: ConfigManager.config.ETHEREUM_CHAIN,
     timestamp: initTime,
     latency: latency(initTime, Date.now()),
     txHash,
     confirmed,
     receipt: toEthereumTransactionReceipt(receipt),
   };
+}
+
+export function getTokenSymbolsToTokens(
+  ethereum: EthereumBase,
+  tokenSymbols: Array<string>
+): Record<string, Token> {
+  const tokens: Record<string, Token> = {};
+
+  for (let i = 0; i < tokenSymbols.length; i++) {
+    const symbol = tokenSymbols[i];
+    const token = ethereum.getTokenBySymbol(symbol);
+    if (!token) {
+      continue;
+    }
+
+    tokens[symbol] = token;
+  }
+
+  return tokens;
 }

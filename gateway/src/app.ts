@@ -2,6 +2,7 @@ import express from 'express';
 import { Server } from 'http';
 import { Request, Response, NextFunction } from 'express';
 import { EthereumRoutes } from './chains/ethereum/ethereum.routes';
+import { AvalancheRoutes } from './chains/avalanche/avalanche.routes';
 import { UniswapRoutes } from './chains/ethereum/uniswap/uniswap.routes';
 import { ConfigManager } from './services/config-manager';
 import { logger, updateLoggerToStdout } from './services/logger';
@@ -17,16 +18,8 @@ app.use(express.json());
 // parse url for application/x-www-form-urlencoded
 app.use(express.urlencoded({ extended: true }));
 
-// app.use('/avalanche', (req, _res, next) => {
-//   console.log(req.url, req.path, req.baseUrl, req.originalUrl, req.hostname);
-//   req.baseUrl = `/eth`;
-//   req.originalUrl = `/eth/poll`;
-//   console.log(req.url, req.path, req.baseUrl, req.originalUrl, req.hostname);
-//   next();
-// });
-
-app.use('/avalanche', EthereumRoutes.router);
-app.use('/avalanche/pangolin', UniswapRoutes.router);
+app.use('/avalanche', AvalancheRoutes.router);
+// app.use('/avalanche/pangolin', UniswapRoutes.router);
 
 // mount sub routers
 app.use('/eth', EthereumRoutes.router);

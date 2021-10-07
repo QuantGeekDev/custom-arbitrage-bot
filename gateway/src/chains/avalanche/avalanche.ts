@@ -1,59 +1,58 @@
 import abi from '../../services/ethereum.abi.json';
-import axios from 'axios';
 import { logger } from '../../services/logger';
 import { BigNumber, Contract, Transaction, Wallet } from 'ethers';
-import { EthereumBase } from '../../services/ethereum-base';
+import { EthereumBase, Token } from '../../services/ethereum-base';
 import { ConfigManager } from '../../services/config-manager';
-import { EthereumConfig } from './ethereum.config';
+import { AvalancheConfig } from './avalanche.config';
 import { TokenValue } from '../../services/base';
 import { Provider } from '@ethersproject/abstract-provider';
 
 // MKR does not match the ERC20 perfectly so we need to use a separate ABI.
 const MKR_ADDRESS = '0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2';
 
-export class Ethereum extends EthereumBase {
-  private static _instance: Ethereum;
-  private _ethGasStationUrl: string;
+export class Avalanche extends EthereumBase {
+  private static _instance: Avalanche;
   private _gasPrice: number;
-  private _gasPriceLastUpdated: Date | null;
+  // private _ethGasStationUrl: string;
+  // private _gasPriceLastUpdated: Date | null;
 
   private constructor() {
     let config;
-    switch (ConfigManager.config.ETHEREUM_CHAIN) {
-      case 'mainnet':
-        config = EthereumConfig.config.mainnet;
+    switch (ConfigManager.config.AVALANCHE_CHAIN) {
+      case 'fuji':
+        config = AvalancheConfig.config.fuji;
         break;
-      case 'kovan':
-        config = EthereumConfig.config.kovan;
+      case 'avalanche':
+        config = AvalancheConfig.config.avalanche;
         break;
       default:
-        throw new Error('ETHEREUM_CHAIN not valid');
+        throw new Error('AVALANCHE_CHAIN not valid');
     }
 
     super(
       config.chainId,
-      config.rpcUrl + ConfigManager.config.INFURA_KEY,
+      config.rpcUrl,
       config.tokenListSource,
       config.tokenListType,
-      ConfigManager.config.ETH_MANUAL_GAS_PRICE
+      ConfigManager.config.AVAX_MANUAL_GAS_PRICE
     );
 
-    this._ethGasStationUrl =
-      'https://ethgasstation.info/api/ethgasAPI.json?api-key=' +
-      ConfigManager.config.ETH_GAS_STATION_API_KEY;
+    this._gasPrice = ConfigManager.config.AVAX_MANUAL_GAS_PRICE;
+    // this._ethGasStationUrl =
+    //   'https://ethgasstation.info/api/ethgasAPI.json?api-key=' +
+    //   ConfigManager.config.ETH_GAS_STATION_API_KEY;
 
-    this._gasPrice = ConfigManager.config.ETH_MANUAL_GAS_PRICE;
-    this._gasPriceLastUpdated = null;
+    // this._gasPriceLastUpdated = null;
 
-    this.updateGasPrice();
+    // this.updateGasPrice();
   }
 
-  public static getInstance(): Ethereum {
-    if (!Ethereum._instance) {
-      Ethereum._instance = new Ethereum();
+  public static getInstance(): Avalanche {
+    if (!Avalanche._instance) {
+      Avalanche._instance = new Avalanche();
     }
 
-    return Ethereum._instance;
+    return Avalanche._instance;
   }
 
   // getters
@@ -62,27 +61,9 @@ export class Ethereum extends EthereumBase {
     return this._gasPrice;
   }
 
-  public get gasPriceLastDated(): Date | null {
-    return this._gasPriceLastUpdated;
-  }
-
-  // If ConfigManager.config.ETH_GAS_STATION_ENABLE is true this will
-  // continually update the gas price.
-  async updateGasPrice(): Promise<void> {
-    if (ConfigManager.config.ETH_GAS_STATION_ENABLE) {
-      const { data } = await axios.get(this._ethGasStationUrl);
-
-      // divide by 10 to convert it to Gwei
-      this._gasPrice =
-        data[ConfigManager.config.ETH_GAS_STATION_GAS_LEVEL] / 10;
-      this._gasPriceLastUpdated = new Date();
-
-      setTimeout(
-        this.updateGasPrice.bind(this),
-        ConfigManager.config.ETH_GAS_STATION_REFRESH_TIME * 1000
-      );
-    }
-  }
+  // public get gasPriceLastDated(): Date | null {
+  //   return this._gasPriceLastUpdated;
+  // }
 
   // override getERC20Balance definition to handle MKR edge case
   async getERC20Balance(
@@ -162,12 +143,18 @@ export class Ethereum extends EthereumBase {
     }
     const response = await contract.approve(spender, amount, {
       gasPrice: this._gasPrice * 1e9,
-      gasLimit: 100000,
+      gasLimit: 8 * 10e6,
       nonce: nonce,
     });
     logger.info(response);
 
     await this.nonceManager.commitNonce(wallet.address, nonce);
     return response;
+  }
+
+  getTokenBySymbol(tokenSymbol: string): Token | undefined {
+    return this._tokenList.find(
+      (token: Token) => token.symbol === tokenSymbol.toUpperCase()
+    );
   }
 }

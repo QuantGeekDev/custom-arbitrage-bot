@@ -1,5 +1,5 @@
 import ethers from 'ethers';
-import { logger } from '../../services/logger';
+import { logger } from './logger';
 
 export class EVMNonceManager {
   private static _instance: EVMNonceManager;

@@ -3,6 +3,7 @@ import abi from './ethereum.abi.json';
 import axios from 'axios';
 import fs from 'fs/promises';
 import { TokenListType, TokenValue } from './base';
+import { EVMNonceManager } from './evm.nonce';
 
 // information about an Ethereum token
 export interface Token {
@@ -11,6 +12,13 @@ export interface Token {
   name: string;
   symbol: string;
   decimals: number;
+}
+export interface EthereumBaseConfig {
+  chainId: number;
+  rpcUrl: string;
+  tokenListType: TokenListType;
+  tokenListSource: string;
+  gasPriceConstant: number;
 }
 
 export class EthereumBase {
@@ -27,6 +35,7 @@ export class EthereumBase {
   public gasPriceConstant;
   public tokenListSource: string;
   public tokenListType: TokenListType;
+  private _nonceManager: EVMNonceManager;
 
   constructor(
     chainId: number,
@@ -41,6 +50,8 @@ export class EthereumBase {
     this.gasPriceConstant = gasPriceConstant;
     this.tokenListSource = tokenListSource;
     this.tokenListType = tokenListType;
+    this._nonceManager = EVMNonceManager.getInstance();
+    this._nonceManager.init(this.provider, 60);
   }
 
   ready(): boolean {
@@ -94,6 +105,17 @@ export class EthereumBase {
   // returns the gas price.
   public get gasPrice(): number {
     return this.gasPriceConstant;
+  }
+
+  public get nonceManager() {
+    return this._nonceManager;
+  }
+
+  // ethereum token lists are large. instead of reloading each time with
+  // getTokenList, we can read the stored tokenList value from when the
+  // object was initiated.
+  public get storedTokenList(): Token[] {
+    return this._tokenList;
   }
 
   // return the Token object for a symbol
@@ -162,5 +184,11 @@ export class EthereumBase {
       gasPrice: this.gasPriceConstant * 1e9,
       gasLimit: 100000,
     });
+  }
+
+  getTokenBySymbol(tokenSymbol: string): Token | undefined {
+    return this._tokenList.find(
+      (token: Token) => token.symbol === tokenSymbol.toUpperCase()
+    );
   }
 }

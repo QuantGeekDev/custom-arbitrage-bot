@@ -14,12 +14,14 @@ export namespace ConfigManager {
     CERT_PATH: string;
     CERT_PASSPHRASE: string;
     ETHEREUM_CHAIN: string;
+    AVALANCHE_CHAIN: string;
     INFURA_KEY: string;
     ETH_GAS_STATION_ENABLE: boolean;
     ETH_GAS_STATION_API_KEY: string;
     ETH_GAS_STATION_GAS_LEVEL: string;
     ETH_GAS_STATION_REFRESH_TIME: number;
     ETH_MANUAL_GAS_PRICE: number;
+    AVAX_MANUAL_GAS_PRICE: number;
     UNISWAP_ALLOWED_SLIPPAGE: string;
     UNISWAP_GAS_LIMIT: number;
     UNISWAP_TTL: number;
@@ -50,12 +52,14 @@ export namespace ConfigManager {
       'CERT_PATH' in o &&
       'CERT_PASSPHRASE' in o &&
       'ETHEREUM_CHAIN' in o &&
+      'AVALANCHE_CHAIN' in o &&
       'INFURA_KEY' in o &&
       'ETH_GAS_STATION_ENABLE' in o &&
       'ETH_GAS_STATION_API_KEY' in o &&
       'ETH_GAS_STATION_GAS_LEVEL' in o &&
       'ETH_GAS_STATION_REFRESH_TIME' in o &&
       'ETH_MANUAL_GAS_PRICE' in o &&
+      'AVAX_MANUAL_GAS_PRICE' in o &&
       'UNISWAP_ALLOWED_SLIPPAGE' in o &&
       percentRegexp.test(o['UNISWAP_ALLOWED_SLIPPAGE']) &&
       'UNISWAP_GAS_LIMIT' in o &&
