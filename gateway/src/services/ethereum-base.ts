@@ -23,7 +23,7 @@ export interface EthereumBaseConfig {
 
 export class EthereumBase {
   private _provider;
-  protected _tokenList: Token[] = [];
+  protected tokenList: Token[] = [];
   private _tokenMap: Record<string, Token> = {};
   // there are async values set in the constructor
   private _ready: boolean = false;
@@ -115,7 +115,7 @@ export class EthereumBase {
   // getTokenList, we can read the stored tokenList value from when the
   // object was initiated.
   public get storedTokenList(): Token[] {
-    return this._tokenList;
+    return this.tokenList;
   }
 
   // return the Token object for a symbol
@@ -192,7 +192,7 @@ export class EthereumBase {
   }
 
   getTokenBySymbol(tokenSymbol: string): Token | undefined {
-    return this._tokenList.find(
+    return this.tokenList.find(
       (token: Token) => token.symbol === tokenSymbol.toUpperCase()
     );
   }
