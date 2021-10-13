@@ -9,14 +9,14 @@ import { Trade } from '@uniswap/sdk';
 import { getAmountInBigNumber, getTrade } from './uniswap.controllers';
 
 type Side = 'BUY' | 'SELL';
-interface UniswapPriceRequest {
+export interface UniswapPriceRequest {
   quote: string;
   base: string;
   amount: string;
   side: Side;
 }
 
-interface UniswapPriceResponse {
+export interface UniswapPriceResponse {
   network: string;
   timestamp: number;
   latency: number;
@@ -31,7 +31,7 @@ interface UniswapPriceResponse {
   trade: Trade;
 }
 
-interface UniswapTradeRequest {
+export interface UniswapTradeRequest {
   quote: string;
   base: string;
   amount: string;
@@ -41,7 +41,7 @@ interface UniswapTradeRequest {
   nonce?: number;
 }
 
-interface UniswapTradeResponse {
+export interface UniswapTradeResponse {
   network: string;
   timestamp: number;
   latency: number;
@@ -58,7 +58,7 @@ interface UniswapTradeResponse {
   txHash: string | undefined;
 }
 
-interface UniswapTradeErrorResponse {
+export interface UniswapTradeErrorResponse {
   error: string;
   message: string;
 }

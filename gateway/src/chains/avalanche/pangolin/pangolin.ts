@@ -12,7 +12,7 @@ import {
   Trade,
 } from '@uniswap/sdk';
 import { logger } from '../../../services/logger';
-import routerAbi from './uniswap_v2_router_abi.json';
+import routerAbi from './IPangolinPair_abi.json';
 import { Uniswapish } from '../../ethereum/uniswap/uniswap';
 
 export interface ExpectedTrade {
