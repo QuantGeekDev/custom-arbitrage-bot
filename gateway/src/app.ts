@@ -2,8 +2,9 @@ import express from 'express';
 import { Server } from 'http';
 import { Request, Response, NextFunction } from 'express';
 import { EthereumRoutes } from './chains/ethereum/ethereum.routes';
-import { AvalancheRoutes } from './chains/avalanche/avalanche.routes';
 import { UniswapRoutes } from './chains/ethereum/uniswap/uniswap.routes';
+import { AvalancheRoutes } from './chains/avalanche/avalanche.routes';
+import { PangolinRoutes } from './chains/avalanche/pangolin/pangolin.routes';
 import { ConfigManager } from './services/config-manager';
 import { logger, updateLoggerToStdout } from './services/logger';
 import { addHttps } from './https';
@@ -19,7 +20,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use('/avalanche', AvalancheRoutes.router);
-// app.use('/avalanche/pangolin', UniswapRoutes.router);
+app.use('/avalanche/pangolin', PangolinRoutes.router);
 
 // mount sub routers
 app.use('/eth', EthereumRoutes.router);

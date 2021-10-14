@@ -16,7 +16,7 @@ import {
   getAmountInBigNumber,
   getTrade,
 } from '../../ethereum/uniswap/uniswap.controllers';
-export namespace UniswapRoutes {
+export namespace PangolinRoutes {
   export const router = Router();
   export const pangolin = Pangolin.getInstance();
   export const avalanche = Avalanche.getInstance();
