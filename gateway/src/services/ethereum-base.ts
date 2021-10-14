@@ -80,8 +80,8 @@ export class EthereumBase {
     tokenListSource: string,
     tokenListType: TokenListType
   ): Promise<void> {
-    this._tokenList = await this.getTokenList(tokenListSource, tokenListType);
-    this._tokenList.forEach(
+    this.tokenList = await this.getTokenList(tokenListSource, tokenListType);
+    this.tokenList.forEach(
       (token: Token) => (this._tokenMap[token.symbol] = token)
     );
   }

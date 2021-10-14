@@ -153,7 +153,7 @@ export class Avalanche extends EthereumBase {
   }
 
   getTokenBySymbol(tokenSymbol: string): Token | undefined {
-    return this._tokenList.find(
+    return this.tokenList.find(
       (token: Token) => token.symbol === tokenSymbol.toUpperCase()
     );
   }
