@@ -191,9 +191,9 @@ export class EthereumBase {
     });
   }
 
-  getTokenBySymbol(tokenSymbol: string): Token | undefined {
+  public getTokenBySymbol(tokenSymbol: string): Token | undefined {
     return this.tokenList.find(
-      (token: Token) => token.symbol === tokenSymbol.toUpperCase()
+      (token: Token) => token.symbol.toUpperCase() === tokenSymbol.toUpperCase()
     );
   }
 }

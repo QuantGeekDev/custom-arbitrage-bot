@@ -1,7 +1,7 @@
 import abi from '../../services/ethereum.abi.json';
 import { logger } from '../../services/logger';
 import { BigNumber, Contract, Transaction, Wallet } from 'ethers';
-import { EthereumBase, Token } from '../../services/ethereum-base';
+import { EthereumBase } from '../../services/ethereum-base';
 import { ConfigManager } from '../../services/config-manager';
 import { AvalancheConfig } from './avalanche.config';
 import { TokenValue } from '../../services/base';
@@ -150,11 +150,5 @@ export class Avalanche extends EthereumBase {
 
     await this.nonceManager.commitNonce(wallet.address, nonce);
     return response;
-  }
-
-  getTokenBySymbol(tokenSymbol: string): Token | undefined {
-    return this.tokenList.find(
-      (token: Token) => token.symbol === tokenSymbol.toUpperCase()
-    );
   }
 }

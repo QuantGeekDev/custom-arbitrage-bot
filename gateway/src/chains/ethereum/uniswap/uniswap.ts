@@ -122,7 +122,9 @@ export class Uniswap implements Uniswapish {
       `Best trade for ${tokenIn.address}-${tokenOut.address}: ${trades[0]}`
     );
     const expectedAmount = trades[0].minimumAmountOut(
-      ConfigManager.getUniswapAllowedSlippagePercentage(ConfigManager.config)
+      ConfigManager.getSlippagePercentage(
+        ConfigManager.config.UNISWAP_ALLOWED_SLIPPAGE
+      )
     );
     return { trade: trades[0], expectedAmount };
   }
@@ -157,7 +159,9 @@ export class Uniswap implements Uniswapish {
     );
 
     const expectedAmount = trades[0].maximumAmountIn(
-      ConfigManager.getUniswapAllowedSlippagePercentage(ConfigManager.config)
+      ConfigManager.getSlippagePercentage(
+        ConfigManager.config.UNISWAP_ALLOWED_SLIPPAGE
+      )
     );
     return { trade: trades[0], expectedAmount };
   }
@@ -172,8 +176,8 @@ export class Uniswap implements Uniswapish {
     const result = Router.swapCallParameters(trade, {
       ttl: ConfigManager.config.UNISWAP_TTL,
       recipient: wallet.address,
-      allowedSlippage: ConfigManager.getUniswapAllowedSlippagePercentage(
-        ConfigManager.config
+      allowedSlippage: ConfigManager.getSlippagePercentage(
+        ConfigManager.config.UNISWAP_ALLOWED_SLIPPAGE
       ),
     });
 

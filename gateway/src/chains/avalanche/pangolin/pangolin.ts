@@ -104,7 +104,9 @@ export class Pangolin implements Uniswapish {
       `Best trade for ${tokenIn.address}-${tokenOut.address}: ${trades[0]}`
     );
     const expectedAmount = trades[0].minimumAmountOut(
-      ConfigManager.getUniswapAllowedSlippagePercentage(ConfigManager.config)
+      ConfigManager.getSlippagePercentage(
+        ConfigManager.config.PANGOLIN_ALLOWED_SLIPPAGE
+      )
     );
     return { trade: trades[0], expectedAmount };
   }
@@ -139,7 +141,9 @@ export class Pangolin implements Uniswapish {
     );
 
     const expectedAmount = trades[0].maximumAmountIn(
-      ConfigManager.getUniswapAllowedSlippagePercentage(ConfigManager.config)
+      ConfigManager.getSlippagePercentage(
+        ConfigManager.config.PANGOLIN_ALLOWED_SLIPPAGE
+      )
     );
     return { trade: trades[0], expectedAmount };
   }
@@ -152,10 +156,10 @@ export class Pangolin implements Uniswapish {
     nonce?: number
   ): Promise<Transaction> {
     const result = Router.swapCallParameters(trade, {
-      ttl: ConfigManager.config.UNISWAP_TTL,
+      ttl: ConfigManager.config.PANGOLIN_TTL,
       recipient: wallet.address,
-      allowedSlippage: ConfigManager.getUniswapAllowedSlippagePercentage(
-        ConfigManager.config
+      allowedSlippage: ConfigManager.getSlippagePercentage(
+        ConfigManager.config.PANGOLIN_ALLOWED_SLIPPAGE
       ),
     });
 
@@ -165,7 +169,7 @@ export class Pangolin implements Uniswapish {
     }
     const tx = await contract[result.methodName](...result.args, {
       gasPrice: gasPrice * 1e9,
-      gasLimit: ConfigManager.config.UNISWAP_GAS_LIMIT,
+      gasLimit: ConfigManager.config.PANGOLIN_GAS_LIMIT,
       value: result.value,
       nonce: nonce,
     });

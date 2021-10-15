@@ -25,18 +25,20 @@ export namespace ConfigManager {
     UNISWAP_ALLOWED_SLIPPAGE: string;
     UNISWAP_GAS_LIMIT: number;
     UNISWAP_TTL: number;
+    PANGOLIN_ALLOWED_SLIPPAGE: string;
+    PANGOLIN_GAS_LIMIT: number;
+    PANGOLIN_TTL: number;
     LOG_TO_STDOUT?: boolean;
     UNSAFE_DEV_MODE_WITH_HTTP?: boolean;
   }
 
   const percentRegexp = new RegExp(/^(\d+)\/(\d+)$/);
 
-  export function getUniswapAllowedSlippagePercentage(config: Config): Percent {
-    const slippageString = config['UNISWAP_ALLOWED_SLIPPAGE'];
-    const nd = slippageString.match(percentRegexp);
+  export function getSlippagePercentage(allowedSlippage: string): Percent {
+    const nd = allowedSlippage.match(percentRegexp);
     if (nd) return new Percent(nd[1], nd[2]);
     throw new Error(
-      'Encountered a malformed percent string in the config for UNISWAP_ALLOWED_SLIPPAGE.'
+      'Encountered a malformed percent string in the config for ALLOWED_SLIPPAGE.'
     );
   }
 
@@ -63,7 +65,11 @@ export namespace ConfigManager {
       'UNISWAP_ALLOWED_SLIPPAGE' in o &&
       percentRegexp.test(o['UNISWAP_ALLOWED_SLIPPAGE']) &&
       'UNISWAP_GAS_LIMIT' in o &&
-      'UNISWAP_TTL' in o
+      'UNISWAP_TTL' in o &&
+      'PANGOLIN_ALLOWED_SLIPPAGE' in o &&
+      percentRegexp.test(o['PANGOLIN_ALLOWED_SLIPPAGE']) &&
+      'PANGOLIN_GAS_LIMIT' in o &&
+      'PANGOLIN_TTL' in o
     );
   }
 
