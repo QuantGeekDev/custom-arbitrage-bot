@@ -143,7 +143,7 @@ export class Avalanche extends EthereumBase {
     }
     const response = await contract.approve(spender, amount, {
       gasPrice: this._gasPrice * 1e9,
-      gasLimit: 8 * 10e6,
+      gasLimit: 100000,
       nonce: nonce,
     });
     logger.info(response);
