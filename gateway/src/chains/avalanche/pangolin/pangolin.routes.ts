@@ -7,15 +7,12 @@ import { BigNumber, Wallet } from 'ethers';
 import { latency, gasCostInEthString } from '../../../services/base';
 import {
   UniswapPriceRequest,
-  UniswapPriceResponse,
   UniswapTradeErrorResponse,
   UniswapTradeRequest,
   UniswapTradeResponse,
 } from '../../ethereum/uniswap/uniswap.routes';
-import {
-  getAmountInBigNumber,
-  getTrade,
-} from '../../ethereum/uniswap/uniswap.controllers';
+import { getAmountInBigNumber, getTrade } from './pangolin.controllers';
+import { Trade } from '@pangolindex/sdk';
 export namespace PangolinRoutes {
   export const router = Router();
   export const pangolin = Pangolin.getInstance();
@@ -42,12 +39,27 @@ export namespace PangolinRoutes {
     });
   });
 
+  export interface PangolinPriceResponse {
+    network: string;
+    timestamp: number;
+    latency: number;
+    base: string;
+    quote: string;
+    amount: string;
+    expectedAmount: string;
+    price: string;
+    gasPrice: number;
+    gasLimit: number;
+    gasCost: string;
+    trade: Trade;
+  }
+
   router.post(
     '/price',
     asyncHandler(
       async (
         req: Request<{}, {}, UniswapPriceRequest>,
-        res: Response<UniswapPriceResponse, {}>
+        res: Response<PangolinPriceResponse, {}>
       ) => {
         const initTime = Date.now();
         let amount: BigNumber;
@@ -87,7 +99,7 @@ export namespace PangolinRoutes {
         }
 
         res.status(200).json({
-          network: ConfigManager.config.ETHEREUM_CHAIN,
+          network: ConfigManager.config.AVALANCHE_CHAIN,
           timestamp: initTime,
           latency: latency(initTime, Date.now()),
           base: baseToken.address,
@@ -179,7 +191,7 @@ export namespace PangolinRoutes {
         );
 
         const response: UniswapTradeResponse = {
-          network: ConfigManager.config.ETHEREUM_CHAIN,
+          network: ConfigManager.config.AVALANCHE_CHAIN,
           timestamp: initTime,
           latency: latency(initTime, Date.now()),
           base: baseToken.address,

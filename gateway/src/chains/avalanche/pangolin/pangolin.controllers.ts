@@ -1,7 +1,7 @@
 import { BigNumber } from 'ethers';
 import { stringWithDecimalToBigNumber } from '../../../services/base';
 import { EthereumBase } from '../../../services/ethereum-base';
-import { Uniswap } from './uniswap';
+import { Pangolin } from './pangolin';
 
 // the amount is passed in as a string. We must validate the value.
 // If it is a strictly an integer string, we can pass it interpet it as a BigNumber.
@@ -34,7 +34,7 @@ export function getAmountInBigNumber(
 }
 
 export async function getTrade(
-  uniswap: Uniswap,
+  pangolin: Pangolin,
   side: string,
   quoteTokenAddress: string,
   baseTokenAddress: string,
@@ -42,12 +42,12 @@ export async function getTrade(
 ) {
   const result =
     side === 'BUY'
-      ? await uniswap.priceSwapOut(
+      ? await pangolin.priceSwapOut(
           quoteTokenAddress, // tokenIn is quote asset
           baseTokenAddress, // tokenOut is base asset
           amount
         )
-      : await uniswap.priceSwapIn(
+      : await pangolin.priceSwapIn(
           baseTokenAddress, // tokenIn is base asset
           quoteTokenAddress, // tokenOut is quote asset
           amount

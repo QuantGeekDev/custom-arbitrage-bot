@@ -19,26 +19,7 @@ export interface ExpectedTrade {
   expectedAmount: CurrencyAmount;
 }
 
-export interface Uniswapish {
-  priceSwapIn(
-    tokenInAddress: string,
-    tokenOutAddress: string,
-    tokenInAmount: BigNumber
-  ): Promise<ExpectedTrade | string>;
-  priceSwapOut(
-    tokenInAddress: string,
-    tokenOutAddress: string,
-    tokenInAmount: BigNumber
-  ): Promise<ExpectedTrade | string>;
-  executeTrade(
-    wallet: Wallet,
-    trade: Trade,
-    gasPrice: number,
-    nonce?: number
-  ): Promise<Transaction>;
-}
-
-export class Uniswap implements Uniswapish {
+export class Uniswap {
   private static instance: Uniswap;
   private _uniswapRouter: string;
   private chainId;

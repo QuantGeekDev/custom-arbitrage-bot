@@ -1,6 +1,6 @@
 import fs from 'fs';
 import yaml from 'js-yaml';
-import { Percent } from '@uniswap/sdk';
+import { Percent } from '@pangolindex/sdk';
 
 export namespace ConfigManager {
   export interface Config {

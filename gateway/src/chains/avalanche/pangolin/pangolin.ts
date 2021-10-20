@@ -10,17 +10,15 @@ import {
   Token,
   TokenAmount,
   Trade,
-} from '@uniswap/sdk';
+} from '@pangolindex/sdk';
 import { logger } from '../../../services/logger';
-import routerAbi from './IPangolinPair_abi.json';
-import { Uniswapish } from '../../ethereum/uniswap/uniswap';
-
+import routerAbi from './IPangolinRouter.json';
 export interface ExpectedTrade {
   trade: Trade;
   expectedAmount: CurrencyAmount;
 }
 
-export class Pangolin implements Uniswapish {
+export class Pangolin {
   private static instance: Pangolin;
   private _pangolinRouter: string;
   private chainId;
@@ -94,7 +92,11 @@ export class Pangolin implements Uniswapish {
     logger.info(
       `Fetching pair data for ${tokenIn.address}-${tokenOut.address}.`
     );
-    const pair = await Fetcher.fetchPairData(tokenIn, tokenOut);
+    const pair = await Fetcher.fetchPairData(
+      tokenIn,
+      tokenOut,
+      this.avalanche.provider
+    );
     const trades = Trade.bestTradeExactIn([pair], tokenInAmount_, tokenOut, {
       maxHops: 1,
     });
@@ -152,7 +154,7 @@ export class Pangolin implements Uniswapish {
     return { trade: trades[0], expectedAmount };
   }
 
-  // given a wallet and a Uniswap trade, try to execute it on the Ethereum block chain.
+  // given a wallet and a Uniswap trade, try to execute it on the Avalanche block chain.
   async executeTrade(
     wallet: Wallet,
     trade: Trade,
@@ -166,7 +168,6 @@ export class Pangolin implements Uniswapish {
         ConfigManager.config.PANGOLIN_ALLOWED_SLIPPAGE
       ),
     });
-
     const contract = new Contract(this._pangolinRouter, routerAbi.abi, wallet);
     if (!nonce) {
       nonce = await this.avalanche.nonceManager.getNonce(wallet.address);
