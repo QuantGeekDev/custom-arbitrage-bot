@@ -1,8 +1,8 @@
 # A single source of truth for constant variables related to the exchange
 
 EXCHANGE_NAME = "k2"
-REST_URL = "https://api-q2.fourwordsalluppercase.com/"
-WSS_URL = "ws://18.135.217.229:8184/v1"
+REST_URL = "https://api-p4.himalaya.exchange/"
+WSS_URL = "wss://ws-p4.himalaya.exchange/v1"
 
 REST_API_VERSION = "v1"
 WS_API_VERSION = "v2"
