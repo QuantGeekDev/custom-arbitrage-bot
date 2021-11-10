@@ -1,7 +1,7 @@
 # Project info
-site_name: Hummingbot Documentation
+site_name: Hummingbot Foundation
 site_description: The official documentation for Hummingbot, the open source crypto market making bot
-site_author: CoinAlpha, Inc.
+site_author: Hummingbot Foundation
 site_url: https://docs.hummingbot.io
 
 # Repository
@@ -10,11 +10,12 @@ repo_url: 'https://github.com/coinalpha/hummingbot'
 edit_uri: 'blob/master/documentation/docs/'
 
 # Copyright
-copyright: Copyright &copy; 2021 CoinAlpha, Inc.
+copyright: Copyright &copy; 2021 Hummingbot Foundation
 
 # Configuration
 theme:
   name: material
+  custom_dir: overrides
   logo: assets/img/logo.png
   favicon: assets/img/favicon.ico
   icon:
@@ -46,9 +47,9 @@ theme:
     - navigation.top
 
 plugins:
-  - search
-  - tags
-  - git-revision-date
+  # - search
+  # - tags
+  # - git-revision-date
   # - social:
   #     cards_color:
   #       fill: '#0FF1CE'
@@ -114,8 +115,13 @@ markdown_extensions:
 
 # Navigation
 nav:
-  - Home:
+  - Home: 
     - Home: index.md
+    - History: history.md
+    - FAQ: faq.md
+    - Glossary: glossary.md
+  - Documentation:
+    - Documentation: docs.md
     - Installation:
       - Installation: installation/index.md
       - Binary (Mac/Win): installation/binary.md
@@ -225,7 +231,6 @@ nav:
       - Ping Pong: strategy-configs/ping-pong.md
       - Rate Oracle: strategy-configs/rate-oracle.md
     - Troubleshooting: troubleshooting.md
-    - Glossary: glossary.md
   - Developers:
       - Developers: developers/index.md
       - Contribution Guidelines: developers/contributions.md
@@ -253,10 +258,6 @@ nav:
         - Scripts: developers/scripts/index.md
         - Script Base Class: developers/scripts/script-base.md
       - Debug Console: developers/debug.md
-  - About:
-    - About Hummingbot: about/index.md
-    - History: about/history.md
-    - FAQ: about/faq.md
   - Release Notes:
     - Release Notes: release-notes/index.md
     - 0.45.0: release-notes/0.45.0.md
