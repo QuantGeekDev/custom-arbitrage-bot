@@ -1,7 +1,7 @@
 # Project info
-site_name: Hummingbot Documentation
-site_description: The official documentation for Hummingbot, the open source crypto market making bot
-site_author: CoinAlpha, Inc.
+site_name: Hummingbot Foundation
+site_description: The official website and documentation site for the Hummingbot Foundation
+site_author: Hummingbot Foundation
 site_url: https://docs.hummingbot.io
 
 # Repository
@@ -10,7 +10,7 @@ repo_url: 'https://github.com/coinalpha/hummingbot'
 edit_uri: 'blob/master/documentation/docs/'
 
 # Copyright
-copyright: Copyright &copy; 2021 CoinAlpha, Inc.
+copyright: Copyright &copy; 2021 Hummingbot Foundation
 
 # Configuration
 theme:
@@ -116,6 +116,10 @@ markdown_extensions:
 nav:
   - Home:
     - Home: index.md
+    - History: home/history.md
+    - FAQ: home/faq.md
+  - Documentation:
+    - Documentation: docs.md
     - Installation:
       - Installation: installation/index.md
       - Binary (Mac/Win): installation/binary.md
@@ -253,10 +257,6 @@ nav:
         - Scripts: developers/scripts/index.md
         - Script Base Class: developers/scripts/script-base.md
       - Debug Console: developers/debug.md
-  - About:
-    - About Hummingbot: about/index.md
-    - History: about/history.md
-    - FAQ: about/faq.md
   - Release Notes:
     - Release Notes: release-notes/index.md
     - 0.45.0: release-notes/0.45.0.md

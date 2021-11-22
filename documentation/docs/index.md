@@ -1,80 +1,58 @@
-Welcome 👋 to the official documentation for Hummingbot, open source software that helps you build and run **crypto trading bots**!
+---
+hide:
+- navigation
+---
 
-## 🐤 Getting started
+# An open source, commmunity-owned framework for building trading bots
+
+Welcome to the official website and documentation for [Hummingbot](https://github.com/coinalpha/hummingbot) and the Hummingbot Foundation!
+
+Hummingbot is open source client software that helps you build automated, algorithmic trading strategies (**"bots"**) that can run on any crypto exchange, both centralized and decentralized. 
+
+The Hummingbot Foundation is a not-for-profit open source foundation that maintains the Hummingbot Github repository in order to enable community governance and maintenance of the project.
+
+- [FAQ](/faq): Answers to common questions
+- [History](/history): Origin story for Hummingbot and the foundation
+
+## 🐤 Get started
 
 New to Hummingbot? Start here!
 
-- [Installation](/installation): Install Hummingbot on various platforms
-- [Basic Operations](/operation): Basic commands and actions in Hummingbot
-
-## 📚 Reference
-
-Learn about the different components in Hummingbot:
-
-- [Strategies](/strategies): Various algorithmic trading strategies
-- [Exchange Connectors](/exchanges): Connectors to centralized and decentralized exchanges
-- [Protocol Connectors](/protocols): Connectors to Layer 1 and Layer 2 protocols
-- [Global Configs](/global-configs): Global configurable modules
-- [Strategy Configs](/strategy-configs): Strategy-specific configurable parameters
-
-## 📝 Release Notes
-
-Hummingbot publishes a new release to its `master` branch approximately every 4 weeks. 
-
-See [Release Notes](/release-notes) for information about the latest release, as well as historical releases.
+- [Documentation](/docs): The official Hummingbot documentation - learn how to run all kinds of trading bots with Hummingbot!
+- [Developers](/developers): Learn how to build your own Hummingbot connectors and strategies
+- [Release notes](/developers): What's included in the latest release as well as historical releases.
 
 ## 📬 Newsletter
 
-To get notified when Hummingbot ships a new release, sign up for the [Hummingbot newsletter](https://hummingbot.substack.com/), which is published when each release drops.
+To get notified when Hummingbot ships a new release, sign up for the [official Hummingbot newsletter](https://hummingbot.substack.com/), which is published when each release drops.
 
 In addition to release notes, the newsletter contains information about upcoming events, new educational content, contributions from the global Hummingbot community!
 
 [Get the Hummingbot newsletter :fontawesome-solid-paper-plane:](https://hummingbot.substack.com/){ .md-button .md-button--primary }
 
-## 👩‍💻 Developers
+## 👪 Community
 
-Hummingbot is a general source framework for crypto algorithmic trading. We welcome developers to fork the codebase for their own purposes and contribute to the community.
+Hummingbot utilizes a modular architecture that enables exchange connectors and trading strategies to be built independently, facilitating contribution by a globally distributed community of developers and quant traders.
 
-- [Contribution Guidelines](/developers/contributions): How to submit contributions to the Hummingbot codebase
-- [Developers](/developers): Explanation of Hummingbot's architecture and detailed reference on how to build connectors and strategies
+### Github
 
-## 🙋‍♂️ Getting help
-
-Check out the [Troubleshooting FAQ](/troubleshooting) to see if your question has already been answered.
-
-!!! warning "Official channels"
-    Only the channels listed below are officially maintained and staffed by the Hummingbot core team. Currently, we do not moderate any other communities on Telegram, Slack, or other platforms. Please beware of potential scams or frauds on any unofficial communities.
+The [Hummingbot GitHub repository](https://github.com/coinalpha/hummingbot) is a monorepo that contains the codebase for Hummingbot, Hummingbot Gateway, and related documentation.
 
 ### Discord
 
-The [Hummingbot Discord server](https://discord.hummingbot.io) is the primary gathering spot for announcements, user support, trading strategies, connectors, and other discussion about Hummingbot. 
+[Discord](https://discord.hummingbot.io) is the primary gathering spot for announcements, user support, trading strategies, connectors, and other discussions within the Hummingbot community. 
 
 !!! danger "No DMs"
     Hummingbot core team members will never initiate direct messages to users. If a random user imitating the core team or any of the community members sends you a DM don't hesitate to report it in our official Discord channel.
 
-### WeChat (中文)
-
-Hummingbot maintains a WeChat group for Mandarin-speaking users. 
-
-Since WeChat is invite-only, users need to add the group admin `amtf202004` to their WeChat. The admin will invite them to the WeChat group.
-
-Mandarin speakers can also visit the **中文** channel in our Discord server for assistance.
-
 ### YouTube
 
-The [Hummingbot YouTube channel](https://www.youtube.com/channel/UCxzzdEnDRbylLMWmaMjywOA) features videos that teach you how to use Hummingbot, how market making and other trading strategies work, and interviews with members of the Hummingbot community.
+Our [YouTube channel](https://www.youtube.com/channel/UCxzzdEnDRbylLMWmaMjywOA) features videos that teach you how to use Hummingbot, how market making and other trading strategies work, and interviews with members of the Hummingbot community.
 
-### GitHub
+### 中文
 
-The [Hummingbot GitHub repository](https://github.com/coinalpha/hummingbot) is a monorepo that contains the codebase for Hummingbot, Hummingbot Gateway, and this documentation.
+We maintain the following resources to provide support for Mandarin speakers:
 
-[中文 wiki](https://github.com/coinalpha/hummingbot_chinese) is our GitHub page translated into Mandarin Chinese which contains general information about Hummingbot.
-
-For bugs not yet listed in GitHub, please submit a [Bug Report](https://github.com/CoinAlpha/hummingbot/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D). **Please follow the template and include detailed descriptions of the bug, steps to reproduction, supporting artifacts such as screenshots, logs, configuration settings, and suggested fixes, if any.**
-
-We pledge that we will not use your information for trading purposes or share your personal information with third parties.
-
-### E-mail
-
-For support requests via email, you can send us a message at [support@hummingbot.io](mailto:support@hummingbot.io).
-
+* **Hummingbot 中文**: Started as a community-created resource, we now maintain a [中文 Github repo](https://github.com/coinalpha/hummingbot_chinese), that  contains general information about Hummingbot in Mandarin
+* **WeChat**: To get an invitation, users should add the group admin `amtf202004` to their WeChat, and the admin will invite them into the WeChat group
+* **Discord**: Join the **中文** channel in [Discord](https://discord.hummingbot.io)
