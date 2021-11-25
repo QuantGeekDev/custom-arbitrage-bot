@@ -201,13 +201,18 @@ class OrderBookTracker(ABC):
 
                 if trading_pair not in self._tracking_message_queues:
                     messages_rejected += 1
+                    self.logger().info(f"\n**** IGNORED ({messages_rejected})****\n    {ob_message}")
                     continue
                 message_queue: asyncio.Queue = self._tracking_message_queues[trading_pair]
                 # Check the order book's initial update ID. If it's larger, don't bother.
                 order_book: OrderBook = self._order_books[trading_pair]
+                self.logger().info(f"\n### diff message id {ob_message.update_id} - "
+                                   f"snapshot_uid {order_book.snapshot_uid}"
+                                   f"\n        {ob_message}")
 
                 if order_book.snapshot_uid > ob_message.update_id:
                     messages_rejected += 1
+                    self.logger().info(f"\n**** IGNORED ({messages_rejected})****\n    {ob_message}")
                     continue
                 await message_queue.put(ob_message)
                 messages_accepted += 1
@@ -238,6 +243,11 @@ class OrderBookTracker(ABC):
                 if trading_pair not in self._tracking_message_queues:
                     continue
                 message_queue: asyncio.Queue = self._tracking_message_queues[trading_pair]
+                self.logger().info(
+                    f"\n@@@ snapshot message id {ob_message.update_id} - "
+                    f"current ob snapshot id {self._order_books[trading_pair].snapshot_uid} - "
+                    f"last diff id {self._order_books[trading_pair].last_diff_uid}"
+                    f"\n        {ob_message}")
                 await message_queue.put(ob_message)
             except asyncio.CancelledError:
                 raise
