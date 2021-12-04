@@ -240,16 +240,6 @@ export async function approve(
     ethereumish.gasPrice
   );
 
-  if (approval.hash) {
-    await ethereumish.txStorage.saveTx(
-      ethereumish.chain,
-      ethereumish.chainId,
-      approval.hash,
-      new Date(),
-      ethereumish.gasPrice
-    );
-  }
-
   return {
     network: ethereumish.chain,
     timestamp: initTime,
@@ -303,24 +293,6 @@ const toEthereumTransactionResponse = (
   return null;
 };
 
-export function willTxSucceed(
-  txDuration: number,
-  txDurationLimit: number,
-  txGasPrice: number,
-  currentGasPrice: number
-): boolean {
-  if (txDuration > txDurationLimit && currentGasPrice > txGasPrice) {
-    return false;
-  }
-  return true;
-}
-
-// txStatus
-// -1: not in the mempool or failed
-// 1: succeeded
-// 2: in the mempool and likely to succeed
-// 3: in the mempool and likely to fail
-// 0: in the mempool but we dont have data to guess its status
 export async function poll(
   ethereumish: Ethereumish,
   req: EthereumPollRequest
@@ -340,25 +312,7 @@ export async function poll(
       // tx is in the mempool
       txBlock = -1;
       txReceipt = null;
-      txStatus = 0;
-
-      const transactions = await ethereumish.txStorage.getTxs(
-        ethereumish.chain,
-        ethereumish.chainId
-      );
-
-      if (transactions[txData.hash]) {
-        const data: [Date, number] = transactions[txData.hash];
-        const now = new Date();
-        const txDuration = Math.abs(now.getTime() - data[0].getTime());
-        if (
-          willTxSucceed(txDuration, 60000 * 3, data[1], ethereumish.gasPrice)
-        ) {
-          txStatus = 2;
-        } else {
-          txStatus = 3;
-        }
-      }
+      txStatus = -1;
     } else {
       // tx has been processed
       txBlock = txReceipt.blockNumber;

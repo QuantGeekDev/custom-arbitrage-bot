@@ -1,54 +1,29 @@
-import fsp from 'fs/promises';
-import fse from 'fs-extra';
-import path from 'path';
 import { LocalStorage } from '../../src/services/local-storage';
 import 'jest-extended';
 
 describe('Test local-storage', () => {
-  let dbPath: string = '';
+  it('store with saveNonce and retrieve with getChainNonces', async () => {
+    const testChain = 'testchain';
+    const testChainId = 123;
+    const testAddress = 'testaddress';
+    const testValue = 541;
 
-  beforeAll(async () => {
-    dbPath = await fsp.mkdtemp(
-      path.join(__dirname, '/local-storage.test.level')
-    );
-  });
-
-  afterAll(async () => {
-    await fse.emptyDir(dbPath);
-    await fse.remove(dbPath);
-  });
-
-  it('save, get and delete a key value pair in the local db', async () => {
-    const testKey = 'abc';
-    const testValue = 123;
+    const dbPath = '/tmp/local-storage.test.level';
 
     const db = new LocalStorage(dbPath);
 
     // clean up any previous db runs
-    await db.del(testKey);
+    await db.deleteNonce(testChain, testChainId, testAddress);
 
-    // saves a key with a value
-    await db.save(testKey, testValue);
+    // saves with a combination of chain/id/address
+    await db.saveNonce(testChain, testChainId, testAddress, testValue);
 
-    const results: Record<string, any> = await db.get((k: string, v: any) => {
-      return [k, parseInt(v)];
-    });
-
+    const results = await db.getChainNonces(testChain, testChainId);
     // returns with an address as key, the chain/id is known by the parameters you provide
-    expect(results).toStrictEqual({
-      [testKey]: testValue,
+    expect(results).toEqual({
+      [testAddress]: testValue,
     });
 
-    expect(db.dbPath).toStrictEqual(dbPath);
-
-    // delete the recentley added key/value pair
-    await db.del(testKey);
-
-    const results2: Record<string, any> = await db.get((k: string, v: any) => {
-      return [k, parseInt(v)];
-    });
-
-    // the key has been deleted, expect an empty object
-    expect(results2).toStrictEqual({});
+    expect(db.dbPath).toEqual(dbPath);
   });
 });

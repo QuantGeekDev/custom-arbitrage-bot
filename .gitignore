@@ -61,10 +61,6 @@ debug.log
 .vscode/
 .history/
 
-# emacs files
-\#*\#
-.\#*
-
 # Documentation build dir
 /documentation/site/
 
@@ -88,8 +84,7 @@ coverage.xml
 # except the example files in /gateway/conf/ and /gateway/conf/samples
 !/gateway/conf/*-example.yml
 !/gateway/conf/samples
-# these are database files create by the level library
-/**/*.level
+/gateway/gateway.level
 
 # node installs
 /gateway/node_modules/
