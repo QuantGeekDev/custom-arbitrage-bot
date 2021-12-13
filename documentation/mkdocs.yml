@@ -116,8 +116,10 @@ markdown_extensions:
 nav:
   - Home:
     - Home: index.md
-    - History: home/history.md
-    - FAQ: home/faq.md
+    - About: about.md
+    - History: history.md
+    - FAQ: faq.md
+    - Community: community.md
   - Documentation:
     - Documentation: docs.md
     - Installation:
@@ -257,6 +259,13 @@ nav:
         - Scripts: developers/scripts/index.md
         - Script Base Class: developers/scripts/script-base.md
       - Debug Console: developers/debug.md
+  - Governance:
+      - Governance: governance/index.md
+      - Whitepaper: governance/whitepaper.md
+      - HBOT: governance/hbot.md
+      - Maintainers: governance/maintainers.md
+      - Sponsors: governance/sponsors.md
+      - Proposals: governance/proposals.md
   - Release Notes:
     - Release Notes: release-notes/index.md
     - 0.46.0: release-notes/0.46.0.md
