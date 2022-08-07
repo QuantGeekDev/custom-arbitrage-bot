@@ -9,15 +9,12 @@ echo
 echo "ℹ️  Press [ENTER] for default values:"
 echo
 
-# Specify hummingbot version
-read -p "   Enter version you want to use [latest] (default = \"latest\") >>> " TAG
-if [ "$TAG" == "" ]
-then
-  TAG="latest"
-fi
+
+TAG="latest"
+
 
 # Ask the user for the name of the new instance
-read -p "   Enter a name for your new  instance (default = \"hummingbot-instance\") >>> " INSTANCE_NAME
+read -p "   Enter a name for your new  instance (default = \"instance\") >>> " INSTANCE_NAME
 if [ "$INSTANCE_NAME" == "" ]
 then
   INSTANCE_NAME="instance"
@@ -75,7 +72,7 @@ create_instance () {
  echo
  # 1) Create main folder for your new instance
  mkdir $FOLDER
- # 2) Create subfolders for hummingbot files
+ # 2) Create subfolders for  files
  mkdir $CONF_FOLDER
  mkdir $CONF_FOLDER/connectors
  mkdir $CONF_FOLDER/strategies
