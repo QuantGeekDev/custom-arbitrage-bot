@@ -3,31 +3,31 @@
 
 echo
 echo
-echo "===============  CREATE A NEW HUMMINGBOT INSTANCE ==============="
+echo "===============  CREATE A NEW INSTANCE ==============="
 echo
 echo
 echo "ℹ️  Press [ENTER] for default values:"
 echo
 
 # Specify hummingbot version
-read -p "   Enter Hummingbot version you want to use [latest/development] (default = \"latest\") >>> " TAG
+read -p "   Enter version you want to use [latest] (default = \"latest\") >>> " TAG
 if [ "$TAG" == "" ]
 then
   TAG="latest"
 fi
 
 # Ask the user for the name of the new instance
-read -p "   Enter a name for your new Hummingbot instance (default = \"hummingbot-instance\") >>> " INSTANCE_NAME
+read -p "   Enter a name for your new  instance (default = \"hummingbot-instance\") >>> " INSTANCE_NAME
 if [ "$INSTANCE_NAME" == "" ]
 then
-  INSTANCE_NAME="hummingbot-instance"
-  DEFAULT_FOLDER="hummingbot_files"
+  INSTANCE_NAME="instance"
+  DEFAULT_FOLDER="files"
 else
   DEFAULT_FOLDER="${INSTANCE_NAME}_files"
 fi
 
 # Ask the user for the folder location to save files
-read -p "   Enter a folder name where your Hummingbot files will be saved (default = \"$DEFAULT_FOLDER\") >>> " FOLDER
+read -p "   Enter a folder name where your  files will be saved (default = \"$DEFAULT_FOLDER\") >>> " FOLDER
 if [ "$FOLDER" == "" ]
 then
   FOLDER=$PWD/$DEFAULT_FOLDER
@@ -47,7 +47,7 @@ echo
 echo "ℹ️  Confirm below if the instance and its folders are correct:"
 echo
 printf "%30s %5s\n" "Instance name:" "$INSTANCE_NAME"
-printf "%30s %5s\n" "Version:" "hummingbot/hummingbot:$TAG"
+printf "%30s %5s\n" "Version:" "custom_bot/custom_bot:$TAG"
 echo
 printf "%30s %5s\n" "Main folder path:" "$FOLDER"
 printf "%30s %5s\n" "Config files:" "├── $CONF_FOLDER"
@@ -71,7 +71,7 @@ prompt_proceed () {
 # Execute docker commands
 create_instance () {
  echo
- echo "Creating Hummingbot instance ... Admin password may be required to set the required permissions ..."
+ echo "Creating instance ... Admin password may be required to set the required permissions ..."
  echo
  # 1) Create main folder for your new instance
  mkdir $FOLDER

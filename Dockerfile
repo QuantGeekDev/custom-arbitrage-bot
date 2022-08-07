@@ -40,7 +40,7 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | b
 # Copy environment only to optimize build caching, so changes in sources will not cause conda env invalidation
 COPY --chown=hummingbot:hummingbot setup/environment-linux.yml setup/
 
-# ./install | create hummingbot environment
+# ./install | create environment
 RUN ~/miniconda3/bin/conda env create -f setup/environment-linux.yml && \
     ~/miniconda3/bin/conda clean -tipy && \
     # clear pip cache

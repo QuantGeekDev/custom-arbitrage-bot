@@ -26,7 +26,7 @@ fi
 
 # Ask the user for the hummingobt data folder location
 prompt_hummingbot_data_path () {
-read -p "   Enter the location where your Hummingbot files are located (example: /Users/hbot/hummingbot_files) >>> " FOLDER
+read -p "   Enter the location where your  files are located (example: /Users/hbot/hummingbot_files) >>> " FOLDER
 if [ "$FOLDER" == "" ]
 then
   prompt_hummingbot_data_path
@@ -42,7 +42,7 @@ else
     if [[ -d "$FOLDER/hummingbot_conf" && -d "$FOLDER/hummingbot_certs" ]]; then
       CERT_PATH=$FOLDER/hummingbot_certs
     else
-      echo "‼️  hummingbot_conf & hummingbot_certs directory missing from path $FOLDER"
+      echo "‼️  conf + certs directory missing from path $FOLDER"
       prompt_hummingbot_data_path
     fi
 
@@ -58,7 +58,7 @@ else
     if [ -d "$FOLDER/hummingbot_logs" ]; then
       LOG_PATH=$FOLDER/hummingbot_logs
     else
-      echo "‼️  hummingbot_logs directory missing from path $FOLDER"
+      echo "‼️  logs directory missing from path $FOLDER"
       prompt_hummingbot_data_path
     fi
   fi
