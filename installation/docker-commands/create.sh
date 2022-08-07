@@ -104,7 +104,7 @@ create_instance () {
  -e CERTS_FOLDER="$CERTS_FOLDER" \
  -e GATEWAY_LOGS_FOLDER="$GATEWAY_LOGS_FOLDER" \
  -e GATEWAY_CONF_FOLDER="$GATEWAY_CONF_FOLDER" \
- OnlinePirateDogFromSpaceAndBeyond2020/custom-arbitrage-bot:$TAG
+ onlinepiratedogfromspaceandbeyond2020/custom-arbitrage-bot:$TAG
 }
 
 prompt_proceed

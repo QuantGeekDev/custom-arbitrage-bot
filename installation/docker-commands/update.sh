@@ -96,7 +96,7 @@ execute_docker () {
  docker rm ${INSTANCES[@]}
  echo
  # 2) Delete old image
- docker image rm OnlinePirateDogFromSpaceAndBeyond2020/custom-arbitrage-bot:$TAG
+ docker image rm onlinepiratedogfromspaceandbeyond2020/custom-arbitrage-bot:$TAG
  # 3) Re-create instances with the most recent hummingbot version
  echo "Re-creating docker containers with updated image ..."
  j="0"
@@ -118,7 +118,7 @@ execute_docker () {
    -e SCRIPTS_FOLDER="${FOLDERS[$j]}/hummingbot_scripts" \
    -e CERTS_FOLDER="${FOLDERS[$j]}/hummingbot_certs" \
    -e GATEWAY_CONF_FOLDER="${FOLDERS[$j]}/gateway_conf" \
-   OnlinePirateDogFromSpaceAndBeyond2020/custom-arbitrage-bot:$TAG
+   onlinepiratedogfromspaceandbeyond2020/custom-arbitrage-bot:$TAG
    j=$[$j+1]
  done
  echo
