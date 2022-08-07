@@ -118,7 +118,7 @@ execute_docker () {
    -e SCRIPTS_FOLDER="${FOLDERS[$j]}/hummingbot_scripts" \
    -e CERTS_FOLDER="${FOLDERS[$j]}/hummingbot_certs" \
    -e GATEWAY_CONF_FOLDER="${FOLDERS[$j]}/gateway_conf" \
-   onlinepiratedogfromspaceandbeyond2020/custom-arbitrage-bot:$TAG
+   alex007d/custom-arbitrage-bot:$TAG
    j=$[$j+1]
  done
  echo
