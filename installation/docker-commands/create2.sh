@@ -3,7 +3,7 @@
 
 echo
 echo
-echo "===============  CREATE A NEW HUMMINGBOT INSTANCE ==============="
+echo "===============  CREATE A NEW INSTANCE ==============="
 echo
 echo
 echo "ℹ️  Press [ENTER] for default values:"
@@ -17,7 +17,7 @@ then
 fi
 
 # Ask the user for the name of the new instance
-read -p "   Enter a name for your new Hummingbot instance (default = \"hummingbot-instance\") >>> " INSTANCE_NAME
+read -p "   Enter a name for your new instance (default = \"instance\") >>> " INSTANCE_NAME
 if [ "$INSTANCE_NAME" == "" ]
 then
   INSTANCE_NAME="hummingbot-instance"
@@ -27,7 +27,7 @@ else
 fi
 
 # Ask the user for the folder location to save files
-read -p "   Enter a folder name where your Hummingbot files will be saved (default = \"$DEFAULT_FOLDER\") >>> " FOLDER
+read -p "   Enter a folder name where your files will be saved (default = \"$DEFAULT_FOLDER\") >>> " FOLDER
 if [ "$FOLDER" == "" ]
 then
   FOLDER=$PWD/$DEFAULT_FOLDER
